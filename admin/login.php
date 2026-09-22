@@ -15,22 +15,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$usuario]);
             $admin = $stmt->fetch();
 
-            $autenticado = false;
-
+            // Toda conta de admin já foi migrada pra bcrypt (ver
+            // harness/db/incidente-2026-09-22-saneamento-producao.sql) — não existe
+            // mais fallback pra MD5/texto puro. Só password_verify() a partir daqui.
             if ($admin && password_verify($senha, $admin['senha'])) {
-                $autenticado = true;
-            } elseif ($admin && ($admin['senha'] === md5($senha) || $admin['senha'] === $senha)) {
-                // Migração transparente: a senha ainda está em MD5/texto puro (herança
-                // de um banco antigo). Como a senha confere, aproveita este login pra
-                // gerar um hash bcrypt novo e substituir na hora — ninguém precisa
-                // trocar a senha que já usa, e o texto puro/MD5 some do banco.
-                $autenticado = true;
-                $novoHash = password_hash($senha, PASSWORD_DEFAULT);
-                $stmtUpgrade = $pdo->prepare("UPDATE administradores SET senha = ? WHERE id = ?");
-                $stmtUpgrade->execute([$novoHash, $admin['id']]);
-            }
+                // Se o hash foi gerado com parâmetros mais fracos do que os atuais
+                // (custo menor, ou versão antiga do bcrypt), regrava com os
+                // parâmetros de hoje de forma transparente, sem pedir nada a quem
+                // logou. Mantém a senha sempre com o hashing mais forte disponível.
+                if (password_needs_rehash($admin['senha'], PASSWORD_BCRYPT, ['cost' => 12])) {
+                    $novoHash = password_hash($senha, PASSWORD_BCRYPT, ['cost' => 12]);
+                    $stmtUpgrade = $pdo->prepare("UPDATE administradores SET senha = ? WHERE id = ?");
+                    $stmtUpgrade->execute([$novoHash, $admin['id']]);
+                }
 
-            if ($autenticado) {
                 session_regenerate_id(true);
                 $_SESSION['admin_logged'] = true;
                 $_SESSION['admin_user'] = $admin['usuario'];

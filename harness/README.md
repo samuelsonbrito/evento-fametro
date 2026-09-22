@@ -19,6 +19,7 @@ o harness por serem correções de segurança diretamente relacionadas, foram
 | `docker-compose.yml`          | PHP+Apache, MySQL e phpMyAdmin locais e descartáveis |
 | `Dockerfile.php`               | Imagem PHP com `pdo_mysql` (a imagem oficial não vem com essa extensão) |
 | `config.local.php`             | Substitui `config/database.php` **só dentro do container**, apontando pro MySQL local |
+| `start.sh` / `stop.sh`          | Sobe/para o ambiente local (ver "Como usar" abaixo) |
 | `smoke-tests.sh`                | Testa via curl o caminho feliz de cada página/endpoint |
 | `tools/hash-password.php`       | Gera hash bcrypt pra senha de admin (em vez de texto puro/MD5) |
 
@@ -37,15 +38,28 @@ Composer nem Docker no PATH no momento da análise).
 
 ## Como usar
 
+Subir o ambiente (roda `docker compose up -d --build` por baixo):
+
 ```bash
-cd harness
-docker compose up -d --build
+bash harness/start.sh
 ```
 
 Isso sobe:
 - **app** — `http://localhost:8080/evento-fametro/index.php`
 - **phpMyAdmin** — `http://localhost:8081` (usuário `fametro`, senha `fametro_local_pw`)
 - **db** — MySQL exposto em `localhost:33061` se quiser conectar com outro cliente
+
+Parar quando terminar de testar (mantém o banco local pra próxima vez):
+
+```bash
+bash harness/stop.sh
+```
+
+Parar E apagar o banco local, pra começar do zero na próxima vez:
+
+```bash
+bash harness/stop.sh --limpar
+```
 
 Login de admin: `admin/login.php` só aceita `password_verify()` — não existe mais
 fallback pra MD5/texto puro (ver `ISSUES.md` item 2), então nenhuma conta do
@@ -74,8 +88,8 @@ bash smoke-tests.sh
 Resetar tudo (banco limpo, seed reaplicado do zero):
 
 ```bash
-docker compose down -v
-docker compose up -d
+bash harness/stop.sh --limpar
+bash harness/start.sh
 ```
 
 ## Apontar pra outro ambiente (ex.: staging)

@@ -1,0 +1,68 @@
+:root {
+  --fametro-blue: #0056b3;
+  --fametro-red: #e30613;
+  --fametro-light: #f8f9fa;
+  --fametro-dark: #1e293b;
+}
+
+/* Cores de Texto */
+.text-fametro-blue {
+  color: var(--fametro-blue) !important;
+}
+
+.text-fametro-red {
+  color: var(--fametro-red) !important;
+}
+
+/* Backgrounds */
+.bg-fametro-blue {
+  background-color: var(--fametro-blue) !important;
+  color: #ffffff !important;
+}
+
+.bg-fametro-red {
+  background-color: var(--fametro-red) !important;
+  color: #ffffff !important;
+}
+
+/* Botões Personalizados */
+.btn-fametro-red {
+  background-color: var(--fametro-red) !important;
+  border-color: var(--fametro-red) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-fametro-red:hover {
+  background-color: #b8030e !important;
+  border-color: #b8030e !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(227, 6, 19, 0.3);
+}
+
+.btn-fametro-blue {
+  background-color: var(--fametro-blue) !important;
+  border-color: var(--fametro-blue) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-fametro-blue:hover {
+  background-color: #003d80 !important;
+  border-color: #003d80 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(0, 86, 179, 0.3);
+}
+
+/* Detalhes de Borda da Navegação */
+.border-bottom-fametro {
+  border-bottom: 4px solid var(--fametro-red) !important;
+}
+
+/* Personalização do Header */
+.navbar-brand {
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}

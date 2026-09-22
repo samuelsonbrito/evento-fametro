@@ -1,0 +1,15 @@
+# Credenciais reais de banco de dados — nunca versionar.
+# Use config/database.example.php como modelo.
+config/database.php
+
+# Ambientes locais
+.env
+.env.*
+
+# Docker (harness)
+harness/config.local.php.bak
+
+# SO / editores
+.DS_Store
+Thumbs.db
+.vscode/

@@ -71,5 +71,7 @@ repositório, nem redigido "depois" — verificar antes de dar `git add`.
   `config/database.php`).
 - Branch `security/admin-password-migration-and-harness` com a correção da migração de
   senha de admin (ver `ISSUES.md` item 2) + toda a pasta `harness/`.
-- PR aberto desse branch contra `main`.
-- Issue de acompanhamento pro restante do backlog de segurança em `ISSUES.md`.
+- [PR #1](https://github.com/samuelsonbrito/evento-fametro/pull/1) aberto desse branch
+  contra `main`.
+- [Issue #2](https://github.com/samuelsonbrito/evento-fametro/issues/2) de
+  acompanhamento pro restante do backlog de segurança em `ISSUES.md`.

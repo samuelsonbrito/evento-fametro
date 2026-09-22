@@ -1,7 +1,9 @@
 # Problemas encontrados na análise
 
-Lista bruta, do mais crítico pro mais cosmético. Nada aqui foi corrigido — é só o
-levantamento para decidir prioridade depois. Cada item tem o(s) arquivo(s) envolvido(s).
+Lista bruta, do mais crítico pro mais cosmético. Cada item tem o(s) arquivo(s)
+envolvido(s). Acompanhamento no GitHub:
+[issue #2](https://github.com/samuelsonbrito/evento-fametro/issues/2) — os itens já
+corrigidos estão marcados abaixo, o resto é backlog.
 
 ## Crítico
 

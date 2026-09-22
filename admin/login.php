@@ -15,8 +15,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$usuario]);
             $admin = $stmt->fetch();
 
-            // Verifica se o utilizador existe e se a palavra-passe corresponde
-            if ($admin && (password_verify($senha, $admin['senha']) || $admin['senha'] === md5($senha) || $admin['senha'] === $senha)) {
+            $autenticado = false;
+
+            if ($admin && password_verify($senha, $admin['senha'])) {
+                $autenticado = true;
+            } elseif ($admin && ($admin['senha'] === md5($senha) || $admin['senha'] === $senha)) {
+                // Migração transparente: a senha ainda está em MD5/texto puro (herança
+                // de um banco antigo). Como a senha confere, aproveita este login pra
+                // gerar um hash bcrypt novo e substituir na hora — ninguém precisa
+                // trocar a senha que já usa, e o texto puro/MD5 some do banco.
+                $autenticado = true;
+                $novoHash = password_hash($senha, PASSWORD_DEFAULT);
+                $stmtUpgrade = $pdo->prepare("UPDATE administradores SET senha = ? WHERE id = ?");
+                $stmtUpgrade->execute([$novoHash, $admin['id']]);
+            }
+
+            if ($autenticado) {
+                session_regenerate_id(true);
                 $_SESSION['admin_logged'] = true;
                 $_SESSION['admin_user'] = $admin['usuario'];
 
@@ -26,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $erro = 'Usuário ou senha incorretos.';
             }
         } catch (PDOException $e) {
-            $erro = 'Erro ao processar login: ' . $e->getMessage();
+            $erro = 'Erro ao processar login. Tente novamente em instantes.';
         }
     } else {
         $erro = 'Preencha todos os campos.';

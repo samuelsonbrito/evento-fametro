@@ -1,10 +1,8 @@
-# Credenciais reais de banco de dados — nunca versionar.
-# Use config/database.example.php como modelo.
-config/database.php
-
-# Ambientes locais
+# Credenciais reais — nunca versionar. config/database.php agora só lê de .env
+# (via includes/env.php), então ele mesmo pode ser versionado normalmente.
 .env
 .env.*
+!.env.example
 
 # Docker (harness)
 harness/config.local.php.bak

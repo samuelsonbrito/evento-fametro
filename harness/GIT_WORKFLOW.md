@@ -6,23 +6,30 @@ O projeto não tinha `git` nem repositório remoto até 2026-09-22. A partir de 
 - **Branch padrão:** `main` — reflete o estado que pode ir pra produção (InfinityFree).
 - **Remote local:** `origin`, via SSH (`git@github.com:samuelsonbrito/evento-fametro.git`).
 
-## Por que `config/database.php` não está no repositório
+## Como as credenciais de banco são versionadas
 
-`config/database.php` guarda a senha real do MySQL de produção em texto puro. Está no
-`.gitignore` de propósito — versionar esse arquivo colocaria a credencial de produção no
-histórico do Git pra sempre, mesmo que fosse removida depois. Em vez disso:
+`config/database.php` **é** versionado normalmente — desde a correção do item 1 em
+`ISSUES.md`, ele não guarda mais nenhum valor real, só lê `DB_HOST`/`DB_NAME`/`DB_USER`/
+`DB_PASS` via `getenv()` (carregados por `includes/env.php` a partir de um `.env` na
+raiz do projeto). Quem guarda segredo é o `.env`, e esse sim está no `.gitignore` e
+nunca deve ser commitado. `.env.example` é o modelo versionado, com placeholders.
 
-- `config/database.example.php` é o modelo commitado, com placeholders.
-- Pra rodar localmente (fora do harness Docker): copiar `config/database.example.php`
-  para `config/database.php` e preencher com credenciais reais/locais.
-- O harness Docker (`harness/docker-compose.yml`) nem usa esse arquivo — ele sobrepõe
-  `config/database.php` só dentro do container com `harness/config.local.php`, que
-  aponta pro MySQL descartável local (ver `harness/README.md`).
-- Se em algum momento a senha atual de produção (a que já está no servidor InfinityFree)
-  precisar ser trocada por ter sido exposta antes deste ponto, isso é uma ação manual no
-  painel do InfinityFree — não tem como "reverter" um `git commit` que nunca aconteceu
-  aqui, mas vale confirmar que a senha antiga nunca foi parar em nenhum outro lugar
-  (print, mensagem, etc.) antes deste harness existir.
+- Pra rodar localmente (fora do harness Docker): copiar `.env.example` para `.env` na
+  raiz do projeto e preencher com credenciais reais/locais.
+- O harness Docker (`harness/docker-compose.yml`) nem usa esse `.env` — ele injeta as
+  variáveis de ambiente direto no container e sobrepõe `config/database.php` só lá
+  dentro com `harness/config.local.php`, que aponta pro MySQL descartável local (ver
+  `harness/README.md`).
+- **Deploy em produção (InfinityFree) exige um passo manual:** o servidor ainda tem uma
+  versão antiga de `config/database.php` com os valores escritos direto no código. Antes
+  de substituir esse arquivo pela versão nova, é preciso criar um `.env` no servidor
+  (mesma pasta, com as credenciais reais de produção) — do contrário o site cai assim
+  que o `config/database.php` novo for enviado, porque não vai achar nenhuma variável
+  definida. Esse deploy não é automatizado por este harness; é FTP/painel manual.
+- Se a senha atual de produção precisar ser trocada por ter sido exposta antes deste
+  ponto, isso é uma ação manual no painel do InfinityFree — não tem como "reverter" um
+  `git commit` que nunca aconteceu aqui, mas vale confirmar que a senha antiga nunca foi
+  parar em nenhum outro lugar (print, mensagem, etc.) antes deste harness existir.
 
 ## Branches
 

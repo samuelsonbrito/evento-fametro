@@ -7,11 +7,22 @@ corrigidos estão marcados abaixo, o resto é backlog.
 
 ## Crítico
 
-1. **Senha do banco de produção em texto puro no repositório.**
-   `config/database.php:11` — `DB_PASS` literal no arquivo. Qualquer pessoa com acesso
-   ao código (ou a um futuro `git push` para um remoto público) tem a senha do MySQL de
-   produção. Recomendo mover para variável de ambiente e trocar a senha assim que isso
-   for feito.
+1. **[CORRIGIDO em 2026-09-22] Senha do banco de produção em texto puro no arquivo.**
+   `config/database.php` tinha `DB_HOST`/`DB_NAME`/`DB_USER`/`DB_PASS` literais no
+   código. Corrigido: `config/database.php` agora lê essas quatro variáveis via
+   `getenv()`, carregadas de um arquivo `.env` na raiz do projeto (por
+   `includes/env.php`, um parser mínimo escrito na mão — o projeto não usa Composer).
+   `.env` está no `.gitignore` e nunca foi commitado; `.env.example` é o modelo
+   versionado. Como `config/database.php` não guarda mais nenhum segredo, ele mesmo
+   passou a ser versionado (antes era ignorado inteiro).
+
+   **Ação manual pendente, fora do alcance do harness:** o `config/database.php` que já
+   está no servidor InfinityFree ainda tem os valores antigos escritos direto no código
+   — isso é outro arquivo físico (deploy é manual, não tem CI/CD nem FTP automatizado
+   aqui). Antes de subir esta versão pro servidor, é preciso criar um arquivo `.env` lá
+   (mesma pasta do `config/database.php` real, com as credenciais de produção reais —
+   ver `.env.example`) **e só depois** substituir o `config/database.php` do servidor
+   por este daqui. Subir só o código novo sem o `.env` correspondente derruba o site.
 
 2. **[CORRIGIDO em 2026-09-22] Login admin aceitava senha em texto puro ou MD5.**
    Confirmado no dump real de produção: o usuário `admin` tinha a senha guardada como

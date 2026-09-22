@@ -66,7 +66,9 @@ fácil (câmera de QR Code, impressão).
 
 Ver `harness/ISSUES.md` para a lista detalhada e priorizada. Resumo:
 
-- Credencial de produção em texto puro dentro do repositório (`config/database.php`).
+- ~~Credencial de produção em texto puro dentro do repositório (`config/database.php`).~~
+  Corrigido: `config/database.php` agora lê de `.env` (não versionado) via
+  `includes/env.php`. Falta replicar isso manualmente no servidor de produção.
 - ~~Login admin aceita senha em texto puro ou MD5 como fallback de `password_verify()`.~~
   Corrigido: agora migra pra bcrypt sozinho no primeiro login válido.
 - Duas colunas de presença (`presenca_confirmada` e `presente`) mantidas em paralelo,

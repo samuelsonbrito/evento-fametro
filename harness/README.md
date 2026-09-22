@@ -1,9 +1,11 @@
 # Harness — evento-fametro
 
 Ambiente e ferramentas para testar mudanças neste projeto sem depender do banco de
-produção da InfinityFree e sem precisar adivinhar se algo quebrou. Nada aqui altera o
-código do site (`config/database.php` e demais arquivos na raiz continuam intocados) —
-o harness é só uma camada por cima.
+produção da InfinityFree e sem precisar adivinhar se algo quebrou. A maior parte é só
+uma camada por cima, sem alterar o código do site — as únicas exceções, feitas junto com
+o harness por serem correções de segurança diretamente relacionadas, foram
+`admin/login.php` (ver `ISSUES.md` item 2) e `config/database.php` + `includes/env.php`
+(ver `ISSUES.md` item 1, credenciais via `.env`).
 
 ## Conteúdo
 
@@ -23,11 +25,10 @@ o harness é só uma camada por cima.
 ## Por que isso existe
 
 O projeto não tinha nenhuma forma de testar mudanças: sem PHP/Composer/Docker
-instalados localmente, `config/database.php` aponta direto pra produção com a senha
-gravada no arquivo, e não há testes nem histórico de git. Qualquer alteração hoje só
-pode ser validada publicando direto e torcendo. Ver `ANALYSIS.md` para o levantamento
-completo e `ISSUES.md` para os riscos concretos (o mais grave: credencial de produção em
-texto puro no repositório).
+instalados localmente, `config/database.php` apontava direto pra produção com a senha
+gravada no arquivo (corrigido — ver `ISSUES.md` item 1), e não havia testes nem
+histórico de git. Ver `ANALYSIS.md` para o levantamento completo e `ISSUES.md` para os
+riscos ainda em aberto.
 
 ## Pré-requisito
 

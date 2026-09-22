@@ -1,0 +1,60 @@
+networks:
+  fametro-harness:
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_local_pw
+      MYSQL_DATABASE: evento_fametro
+      MYSQL_USER: fametro
+      MYSQL_PASSWORD: fametro_local_pw
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d:ro
+      - fametro-db-data:/var/lib/mysql
+    ports:
+      - "33061:3306" # porta alta pra não brigar com um MySQL local do host
+    networks:
+      - fametro-harness
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.php
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_NAME: evento_fametro
+      DB_USER: fametro
+      DB_PASS: fametro_local_pw
+    volumes:
+      # Todo o projeto entra como /evento-fametro, porque o código usa caminhos
+      # absolutos tipo /evento-fametro/index.php em headers e links.
+      - ../:/var/www/html/evento-fametro
+      # Só a config aponta pro banco local — o config/database.php real do repositório
+      # nunca é tocado.
+      - ./config.local.php:/var/www/html/evento-fametro/config/database.php:ro
+    ports:
+      - "8080:80"
+    networks:
+      - fametro-harness
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_USER: fametro
+      PMA_PASSWORD: fametro_local_pw
+    ports:
+      - "8081:80"
+    networks:
+      - fametro-harness
+
+volumes:
+  fametro-db-data:

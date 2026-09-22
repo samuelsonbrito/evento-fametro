@@ -31,23 +31,20 @@ corrigidos estão marcados abaixo, o resto é backlog.
    `GIT_WORKFLOW.md`). Não era um cenário hipotético — a conta de admin do evento estava
    protegida só por MD5.
 
-   Como ninguém tem a senha em texto puro que gerou esse hash (só o dump do banco),
-   trocar a senha "na mão" exigiria comunicar uma senha nova pra quem usa o painel, no
-   meio do evento. Em vez disso, `admin/login.php` agora faz migração transparente: no
-   próximo login válido (com a senha que a pessoa já usa), o código detecta que o hash
-   salvo não é bcrypt, confere a senha via MD5/texto puro como antes, mas imediatamente
-   gera um `password_hash()` novo e sobrescreve a coluna `senha` — sem exigir nenhuma
-   ação de quem loga. Depois desse primeiro login pós-deploy, o MD5 nunca mais existe no
-   banco para essa conta, e todo login seguinte passa só pelo `password_verify()`.
+   A correção original (mesmo dia) fez `admin/login.php` migrar a senha de forma
+   transparente no próximo login válido (detecta MD5/texto puro, confere, e já
+   regrava com `password_hash()`). Essa versão intermediária ficou obsoleta ainda no
+   mesmo dia por causa do incidente de produção descrito na seção "Incidentes" no fim
+   deste arquivo: a tabela `administradores` acabou sendo recriada do zero, então não
+   havia mais nenhuma conta com MD5 real pra migrar — só fazia sentido zerar a senha
+   via script e remover o fallback de vez.
 
-   Testável no harness com a conta `harness_qa` (ver `db/seed.sql`), que simula o mesmo
-   estado legado com uma senha de teste conhecida.
-
-   **Follow-up recomendado, não feito ainda:** depois de confirmar (via
-   `SELECT senha FROM administradores`) que toda conta de admin em produção já foi
-   migrada — hash começando com `$2y$` — remover de vez o fallback de MD5/texto puro em
-   `admin/login.php`, deixando só `password_verify()`. Enquanto isso não acontece, o
-   fallback continua sendo a única forma de destravar uma conta ainda não migrada.
+   **Estado final:** `admin/login.php` não tem mais fallback nenhum pra MD5/texto
+   puro — só `password_verify()`, com `PASSWORD_BCRYPT` custo 12, mais
+   `password_needs_rehash()` pra regravar automaticamente se o custo for aumentado no
+   futuro. A senha de produção foi redefinida via
+   `harness/db/incidente-2026-09-22-saneamento-producao.sql` +
+   `harness/tools/hash-password.php`.
 
 3. **Mensagens de exceção do banco expostas ao usuário final.**
    `cadastro.php:58`, `admin/login.php:29`, `admin/cadastrar-palestra.php:52` — todos
@@ -137,3 +134,45 @@ corrigidos estão marcados abaixo, o resto é backlog.
 16. `admin/confirmar-presenca.php` parece ser uma rota antiga (fluxo por link/GET com
     `?code=`) não referenciada por nenhum outro arquivo lido — possível código morto,
     mas mantenha até confirmar que nenhum e-mail/QR antigo ainda aponta pra ela.
+
+## Incidentes
+
+### 2026-09-22 — perda de dados de produção por rodar `schema.sql`/`seed.sql` no banco real
+
+**O que aconteceu:** `harness/db/schema.sql` (que começa com `DROP TABLE` nas três
+tabelas) e `harness/db/seed.sql` foram executados no phpMyAdmin do banco de produção,
+em vez de só no MySQL descartável do harness (Docker). Consequência:
+
+- As inscrições reais de alunos feitas antes desse momento foram apagadas. Não havia
+  backup — não foi possível recuperar.
+- A tabela `administradores` foi recriada com o hash placeholder (inválido) do
+  `admin` e com a conta de teste `harness_qa`/`harness123` em texto puro — essa
+  segunda, documentada publicamente neste repositório, virou um login de admin de
+  verdade acessível por qualquer pessoa até ser removida.
+- A tabela `palestras` foi recriada com o conteúdo real (isso não foi perda, é dado
+  público que já estava correto no `schema.sql`).
+
+**Correção aplicada:**
+`harness/db/incidente-2026-09-22-saneamento-producao.sql` — remove `harness_qa`,
+redefine a senha do `admin` com um hash gerado na hora, remove as inscrições de teste
+(`QR-SEED%`) sem tocar em nenhuma inscrição real. Também aproveitado pra remover de vez
+o fallback de MD5/texto puro em `admin/login.php` (ver item 2) — sem mais motivo pra
+manter compatibilidade com hash antigo, já que a senha foi redefinida do zero.
+
+**Causa raiz:** nada no próprio `schema.sql`/`seed.sql` deixava óbvio, só de olhar o
+arquivo, que rodá-lo em produção seria destrutivo — a única pista era um comentário no
+topo do arquivo, fácil de não notar antes de colar um SQL grande no phpMyAdmin.
+
+**O que mudou pra não repetir:**
+- `schema.sql` e `seed.sql` agora abrem com um bloco de aviso bem grande e visível,
+  antes de qualquer outra coisa no arquivo.
+- `db/incidente-2026-09-22-saneamento-producao.sql` fica como modelo de como um script
+  de correção de produção deve ser: sem `DROP TABLE`, com `DELETE`/`UPDATE` bem
+  específicos (por `codigo_qrcode LIKE 'QR-SEED%'`, nunca por tabela inteira), e com
+  consultas de verificação no final.
+- **Ainda em aberto:** nenhuma automação impede fisicamente alguém de colar
+  `schema.sql` no SQL do banco errado de novo — a defesa hoje é só o aviso no
+  comentário. Se isso for repetido, vale considerar manter o banco de produção e o do
+  harness em instâncias MySQL com usuários/credenciais completamente diferentes (o que
+  já é o caso hoje, então o risco real é confusão de aba/janela do phpMyAdmin, não
+  credencial compartilhada).

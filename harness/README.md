@@ -47,13 +47,23 @@ Isso sobe:
 - **phpMyAdmin** — `http://localhost:8081` (usuário `fametro`, senha `fametro_local_pw`)
 - **db** — MySQL exposto em `localhost:33061` se quiser conectar com outro cliente
 
-Login de admin: o usuário `admin` vem com um hash placeholder no `db/schema.sql`
-versionado (o hash MD5 real de produção foi redigido antes de subir pro GitHub — ver
-`GIT_WORKFLOW.md` e `ISSUES.md` item 2), então não dá pra logar como `admin` no harness.
-Pra testar o painel, use a conta de QA do seed:
-usuário `harness_qa`, senha `harness123`. Depois desse primeiro login, confira no
-phpMyAdmin que a coluna `senha` dela virou um hash `$2y$...` (bcrypt) sozinha — é a
-migração automática de `admin/login.php` funcionando (ver `ISSUES.md` item 2).
+Login de admin: `admin/login.php` só aceita `password_verify()` — não existe mais
+fallback pra MD5/texto puro (ver `ISSUES.md` item 2), então nenhuma conta do
+`db/schema.sql`/`db/seed.sql` tem uma senha "de fábrica" que funcione (os dois vêm com
+placeholders inválidos de propósito, pra nunca ter um hash real e utilizável dentro de
+um arquivo versionado). Pra logar no harness, gere um hash primeiro:
+
+```bash
+docker compose exec app php /var/www/html/evento-fametro/harness/tools/hash-password.php "sua-senha-de-teste"
+```
+
+E aplique na conta de QA do seed via phpMyAdmin (`localhost:8081`):
+
+```sql
+UPDATE administradores SET senha = '<hash gerado>' WHERE usuario = 'harness_qa';
+```
+
+Depois disso, `harness_qa` / a senha que você escolheu já loga normalmente.
 
 Rodar os smoke tests depois que o `app` responder:
 
@@ -74,14 +84,13 @@ docker compose up -d
 HARNESS_BASE_URL="https://staging.exemplo.com/evento-fametro" bash smoke-tests.sh
 ```
 
-## Gerar uma senha de admin com hash de verdade
+## Incidente de 2026-09-22
 
-```bash
-docker compose exec app php /var/www/html/evento-fametro/harness/tools/hash-password.php "senhaForte123"
-```
-
-Depois grave o hash retornado na coluna `senha` de `administradores` (via phpMyAdmin,
-por exemplo) no lugar do texto puro do seed.
+`harness/db/schema.sql`/`seed.sql` foram rodados por engano contra produção e apagaram
+inscrições reais (sem backup). Ver `harness/db/incidente-2026-09-22-saneamento-producao.sql`
+(script de correção pontual, sem `DROP TABLE`) e `ISSUES.md`. Os dois arquivos de
+schema/seed agora têm avisos bem visíveis no topo — **nunca rodar contra um banco com
+dados reais**.
 
 ## Limitações conhecidas
 

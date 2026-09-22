@@ -1,3 +1,14 @@
+-- ============================================================================
+-- ⚠️  NUNCA RODE ESTE ARQUIVO CONTRA UM BANCO QUE TENHA DADOS REAIS.  ⚠️
+-- Ele começa com DROP TABLE nas três tabelas. Em 2026-09-22 isso foi executado
+-- por engano contra a PRODUÇÃO e apagou inscrições reais de alunos, sem
+-- backup — ver harness/db/incidente-2026-09-22-saneamento-producao.sql e
+-- harness/ISSUES.md. Este arquivo serve SÓ para popular o banco descartável
+-- do harness (harness/docker-compose.yml). Se o objetivo é ajustar produção,
+-- use um script de migração pontual (ALTER TABLE / UPDATE / DELETE
+-- específicos), nunca este arquivo.
+-- ============================================================================
+--
 -- Schema REAL de produção (InfinityFree), como enviado pelo usuário em 2026-09-22.
 -- Este arquivo é a fonte da verdade a partir de agora — qualquer schema inferido
 -- anteriormente foi substituído por este dump. Não editar a estrutura aqui sem

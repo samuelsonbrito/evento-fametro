@@ -1,27 +1,32 @@
+-- ============================================================================
+-- ⚠️  NUNCA RODE ESTE ARQUIVO CONTRA UM BANCO DE PRODUÇÃO.  ⚠️
+-- Isso já aconteceu por engano em 2026-09-22 e colocou uma conta de admin com
+-- senha em texto puro conhecida publicamente (harness_qa/harness123) e
+-- inscrições falsas no banco real — ver
+-- harness/db/incidente-2026-09-22-saneamento-producao.sql. Este arquivo é só
+-- pro banco descartável do harness local (harness/docker-compose.yml).
+-- ============================================================================
+--
 -- Dados de teste para o harness local.
 -- `administradores` e `palestras` já vêm populados pelo schema.sql (é o dump real de
 -- produção — id de admin=1 usuário 'admin', 9 palestras reais). Este arquivo só
 -- acrescenta inscrições de exemplo, respeitando a UNIQUE KEY uk_aluno_palestra
 -- (matricula, palestra_id) que existe de verdade no banco.
 --
--- IMPORTANTE sobre a senha do admin: o hash original em schema.sql era MD5 puro,
--- copiado do banco real de produção — foi REDIGIDO antes de versionar (ver
--- harness/GIT_WORKFLOW.md) porque MD5 é quebrável e isto é um repositório público.
--- De qualquer forma, ninguém aqui sabe a senha em texto puro que gerava aquele hash
--- (não dá pra logar com o usuário 'admin' no harness, com ou sem o hash real). Desde a
--- correção de admin/login.php,
--- isso se resolve sozinho na produção: no primeiro login válido de alguém que souber a
--- senha real, o sistema detecta o MD5, confere a senha e já substitui pelo hash bcrypt
--- na mesma hora — não precisa resetar nada manualmente.
+-- IMPORTANTE sobre login no harness: desde a correção do incidente de 2026-09-22,
+-- admin/login.php só aceita password_verify() — não existe mais fallback pra MD5 nem
+-- texto puro, nem aqui no harness nem em produção. Isso significa que nenhuma senha
+-- "de fábrica" funciona sem gerar um hash de verdade primeiro. O hash do usuário
+-- `admin` em schema.sql é um placeholder inválido de propósito (ver comentário lá).
 --
--- Pra testar esse fluxo de migração aqui no harness sem precisar da senha real, existe
--- uma segunda conta só de QA local:
+-- Pra conseguir logar no harness local, depois de rodar este seed.sql:
+--   1. php harness/tools/hash-password.php "sua-senha-de-teste"
+--   2. UPDATE administradores SET senha = '<hash gerado>' WHERE usuario = 'harness_qa';
+--      (rodar isso no phpMyAdmin do harness, localhost:8081)
 INSERT INTO administradores (usuario, senha) VALUES
-    -- Senha em texto puro DE PROPÓSITO: simula o mesmo estado legado do admin real.
-    -- Logue em /admin/login.php com usuario=harness_qa senha=harness123 e depois
-    -- confira a coluna `senha` dessa linha no phpMyAdmin — deve virar um hash
-    -- começando com $2y$ (bcrypt) automaticamente após esse primeiro login.
-    ('harness_qa', 'harness123');
+    -- Placeholder inválido de propósito — sem hash real, ninguém loga com isto.
+    -- Gere um hash de verdade com harness/tools/hash-password.php (ver acima).
+    ('harness_qa', 'SEM_SENHA_DEFINIDA_VER_INSTRUCOES_ACIMA');
 
 INSERT INTO inscricoes (nome_aluno, matricula, email, palestra_id, codigo_qrcode, presenca_confirmada, tipo_participante, presente, data_presenca) VALUES
     -- Aluno com presença já confirmada (testa admin/imprimir-comprovante.php e o botão "Declaração")

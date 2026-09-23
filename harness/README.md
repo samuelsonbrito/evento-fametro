@@ -101,7 +101,7 @@ HARNESS_BASE_URL="https://staging.exemplo.com/evento-fametro" bash smoke-tests.s
 ## Incidente de 2026-09-22
 
 `harness/db/schema.sql`/`seed.sql` foram rodados por engano contra produção e apagaram
-inscrições reais (sem backup). Ver `harness/db/incidente-2026-09-22-saneamento-producao.sql`
+inscrições reais (sem backup). Ver `harness/db/historico/incidente-2026-09-22-saneamento-producao.sql`
 (script de correção pontual, sem `DROP TABLE`) e `ISSUES.md`. Os dois arquivos de
 schema/seed agora têm avisos bem visíveis no topo — **nunca rodar contra um banco com
 dados reais**.

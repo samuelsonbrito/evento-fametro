@@ -3,7 +3,7 @@
 -- Isso já aconteceu por engano em 2026-09-22 e colocou uma conta de admin com
 -- senha em texto puro conhecida publicamente (harness_qa/harness123) e
 -- inscrições falsas no banco real — ver
--- harness/db/incidente-2026-09-22-saneamento-producao.sql. Este arquivo é só
+-- harness/db/historico/incidente-2026-09-22-saneamento-producao.sql. Este arquivo é só
 -- pro banco descartável do harness local (harness/docker-compose.yml).
 -- ============================================================================
 --

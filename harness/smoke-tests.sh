@@ -89,14 +89,14 @@ check_body_contains "Ticket (seed) exibe QR"             "Comprovante de Inscri�
 echo
 echo "-- Mensagens de erro não vazam detalhe do banco --"
 DUP_JAR="$(mktemp)"
-dup_token_1="$(curl -s -c "$DUP_JAR" "$BASE_URL/cadastro.php?palestra_id=5" | grep -oP 'name="csrf_token" value="\K[^"]*')"
+dup_token_1="$(curl -s -c "$DUP_JAR" "$BASE_URL/cadastro.php?palestra_id=5" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
 resp_dup1="$(curl -s -b "$DUP_JAR" -c "$DUP_JAR" -X POST "$BASE_URL/cadastro.php?palestra_id=5" \
     --data-urlencode "csrf_token=$dup_token_1" \
     --data-urlencode "nome_aluno=Smoke Duplicidade" \
     --data-urlencode "email=smoke.dup1@exemplo.com" \
     --data-urlencode "tipo_participante=aluno" \
     --data-urlencode "matricula=SMOKE-DUP-001")"
-dup_token_2="$(curl -s -b "$DUP_JAR" -c "$DUP_JAR" "$BASE_URL/cadastro.php?palestra_id=5" | grep -oP 'name="csrf_token" value="\K[^"]*')"
+dup_token_2="$(curl -s -b "$DUP_JAR" -c "$DUP_JAR" "$BASE_URL/cadastro.php?palestra_id=5" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
 resp_dup2="$(curl -s -b "$DUP_JAR" -c "$DUP_JAR" -X POST "$BASE_URL/cadastro.php?palestra_id=5" \
     --data-urlencode "csrf_token=$dup_token_2" \
     --data-urlencode "nome_aluno=Smoke Duplicidade 2" \
@@ -137,6 +137,47 @@ else
     echo "FAIL  admin/login.php deveria rejeitar csrf_token errado — veio: $resp_csrf_errado"
     FAIL=$((FAIL+1))
 fi
+
+echo
+echo "-- Botão \"Reportar problema\" --"
+check_body_contains "Widget de relato aparece na home" 'modalReportarErro' "$BASE_URL/index.php"
+
+REPORT_JAR="$(mktemp)"
+report_token="$(curl -s -c "$REPORT_JAR" "$BASE_URL/index.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
+
+resp_report_sem_csrf="$(curl -s -X POST -d 'mensagem=Teste sem token' "$BASE_URL/api/reportar_erro.php")"
+if printf '%s' "$resp_report_sem_csrf" | grep -qF '"ok":false'; then
+    echo "PASS  api/reportar_erro.php rejeita POST sem csrf_token"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  api/reportar_erro.php deveria rejeitar POST sem csrf_token — veio: $resp_report_sem_csrf"
+    FAIL=$((FAIL+1))
+fi
+
+resp_report_vazio="$(curl -s -b "$REPORT_JAR" -X POST \
+    --data-urlencode "csrf_token=$report_token" --data-urlencode "mensagem=" \
+    "$BASE_URL/api/reportar_erro.php")"
+if printf '%s' "$resp_report_vazio" | grep -qF '"ok":false'; then
+    echo "PASS  api/reportar_erro.php rejeita mensagem vazia"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  api/reportar_erro.php deveria rejeitar mensagem vazia — veio: $resp_report_vazio"
+    FAIL=$((FAIL+1))
+fi
+
+resp_report_ok="$(curl -s -b "$REPORT_JAR" -X POST \
+    --data-urlencode "csrf_token=$report_token" \
+    --data-urlencode "tipo=erro" \
+    --data-urlencode "mensagem=Relato de teste do smoke-tests.sh" \
+    "$BASE_URL/api/reportar_erro.php")"
+if printf '%s' "$resp_report_ok" | grep -qF '"ok":true'; then
+    echo "PASS  api/reportar_erro.php aceita relato válido"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  api/reportar_erro.php deveria aceitar relato válido — veio: $resp_report_ok"
+    FAIL=$((FAIL+1))
+fi
+rm -f "$REPORT_JAR"
 
 echo
 echo "-- Headers de segurança e cookie de sessão --"
@@ -187,7 +228,7 @@ echo
 echo "-- API de validação de presença autenticada (opcional) --"
 if [ -n "${HARNESS_ADMIN_USER:-}" ] && [ -n "${HARNESS_ADMIN_PASS:-}" ]; then
     COOKIE_JAR="$(mktemp)"
-    login_token="$(curl -s -c "$COOKIE_JAR" "$BASE_URL/admin/login.php" | grep -oP 'name="csrf_token" value="\K[^"]*')"
+    login_token="$(curl -s -c "$COOKIE_JAR" "$BASE_URL/admin/login.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
     curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" -o /dev/null \
         --data-urlencode "csrf_token=$login_token" \
         --data-urlencode "usuario=$HARNESS_ADMIN_USER" \
@@ -234,7 +275,7 @@ echo "-- Rate limiting no login admin (roda por último, bloqueia o IP de teste)
 RL_JAR="$(mktemp)"
 rl_bloqueado=0
 for i in 1 2 3 4 5 6; do
-    rl_token="$(curl -s -c "$RL_JAR" "$BASE_URL/admin/login.php" | grep -oP 'name="csrf_token" value="\K[^"]*')"
+    rl_token="$(curl -s -c "$RL_JAR" "$BASE_URL/admin/login.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
     rl_resp="$(curl -s -b "$RL_JAR" -c "$RL_JAR" -X POST \
         --data-urlencode "csrf_token=$rl_token" \
         --data-urlencode "usuario=admin" \

@@ -2,7 +2,7 @@
 -- ⚠️  NUNCA RODE ESTE ARQUIVO CONTRA UM BANCO QUE TENHA DADOS REAIS.  ⚠️
 -- Ele começa com DROP TABLE nas três tabelas. Em 2026-09-22 isso foi executado
 -- por engano contra a PRODUÇÃO e apagou inscrições reais de alunos, sem
--- backup — ver harness/db/incidente-2026-09-22-saneamento-producao.sql e
+-- backup — ver harness/db/historico/incidente-2026-09-22-saneamento-producao.sql e
 -- harness/ISSUES.md. Este arquivo serve SÓ para popular o banco descartável
 -- do harness (harness/docker-compose.yml). Se o objetivo é ajustar produção,
 -- use um script de migração pontual (ALTER TABLE / UPDATE / DELETE
@@ -31,6 +31,7 @@ DROP TABLE IF EXISTS inscricoes;
 DROP TABLE IF EXISTS palestras;
 DROP TABLE IF EXISTS administradores;
 DROP TABLE IF EXISTS tentativas_login;
+DROP TABLE IF EXISTS relatos_erro;
 
 -- 3. Cria a tabela 'administradores'
 CREATE TABLE administradores (
@@ -107,6 +108,23 @@ CREATE TABLE tentativas_login (
   ultima_tentativa timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (id),
   UNIQUE KEY identificador (identificador)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7. Cria a tabela 'relatos_erro' (botão "Reportar problema", visível em toda
+-- página). Adicionada em 2026-09-23; se produção já tiver as tabelas anteriores
+-- criadas manualmente antes desta data, rodar só este CREATE TABLE lá (nunca o
+-- schema.sql inteiro, ver aviso no topo deste arquivo).
+CREATE TABLE relatos_erro (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  tipo enum('erro','sugestao','outro') NOT NULL DEFAULT 'erro',
+  mensagem text NOT NULL,
+  nome varchar(150) DEFAULT NULL,
+  email varchar(150) DEFAULT NULL,
+  pagina_url varchar(255) DEFAULT NULL,
+  user_agent varchar(255) DEFAULT NULL,
+  status enum('novo','resolvido') NOT NULL DEFAULT 'novo',
+  criado_em timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

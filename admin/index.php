@@ -8,6 +8,7 @@ checarAutenticacaoAdmin();
 $totalPalestras = $pdo->query("SELECT COUNT(*) FROM palestras")->fetchColumn();
 $totalInscritos = $pdo->query("SELECT COUNT(*) FROM inscricoes")->fetchColumn();
 $totalPresencas = $pdo->query("SELECT COUNT(*) FROM inscricoes WHERE presenca_confirmada = 1")->fetchColumn();
+$totalRelatosNovos = $pdo->query("SELECT COUNT(*) FROM relatos_erro WHERE status = 'novo'")->fetchColumn();
 
 // Listagem das palestras cadastradas
 $palestras = $pdo->query("
@@ -40,6 +41,12 @@ require_once __DIR__ . '/../includes/header.php';
         </a>
         <a href="/admin/cadastrar-palestra.php" class="btn btn-primary px-3 rounded-3 fw-bold" style="background-color: #003a7a; border-color: #003a7a;">
           <i class="ti ti-plus me-1 fs-4"></i> Nova Palestra
+        </a>
+        <a href="/admin/relatos-erro.php" class="btn btn-outline-secondary px-3 rounded-3 fw-bold position-relative">
+          <i class="ti ti-message-report me-1 fs-4"></i> Relatos
+          <?php if ($totalRelatosNovos > 0): ?>
+            <span class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle"><?= $totalRelatosNovos ?></span>
+          <?php endif; ?>
         </a>
       </div>
     </div>

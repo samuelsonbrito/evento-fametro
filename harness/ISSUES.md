@@ -43,7 +43,7 @@ corrigidos estão marcados abaixo, o resto é backlog.
    puro — só `password_verify()`, com `PASSWORD_BCRYPT` custo 12, mais
    `password_needs_rehash()` pra regravar automaticamente se o custo for aumentado no
    futuro. A senha de produção foi redefinida via
-   `harness/db/incidente-2026-09-22-saneamento-producao.sql` +
+   `harness/db/historico/incidente-2026-09-22-saneamento-producao.sql` +
    `harness/tools/hash-password.php`.
 
 2b. **[CORRIGIDO em 2026-09-22] IDOR em `comprovante.php`/`ticket.php` — dados de
@@ -313,7 +313,7 @@ em vez de só no MySQL descartável do harness (Docker). Consequência:
   público que já estava correto no `schema.sql`).
 
 **Correção aplicada:**
-`harness/db/incidente-2026-09-22-saneamento-producao.sql` — remove `harness_qa`,
+`harness/db/historico/incidente-2026-09-22-saneamento-producao.sql` — remove `harness_qa`,
 redefine a senha do `admin` com um hash gerado na hora, remove as inscrições de teste
 (`QR-SEED%`) sem tocar em nenhuma inscrição real. Também aproveitado pra remover de vez
 o fallback de MD5/texto puro em `admin/login.php` (ver item 2) — sem mais motivo pra
@@ -326,7 +326,7 @@ topo do arquivo, fácil de não notar antes de colar um SQL grande no phpMyAdmin
 **O que mudou pra não repetir:**
 - `schema.sql` e `seed.sql` agora abrem com um bloco de aviso bem grande e visível,
   antes de qualquer outra coisa no arquivo.
-- `db/incidente-2026-09-22-saneamento-producao.sql` fica como modelo de como um script
+- `db/historico/incidente-2026-09-22-saneamento-producao.sql` fica como modelo de como um script
   de correção de produção deve ser: sem `DROP TABLE`, com `DELETE`/`UPDATE` bem
   específicos (por `codigo_qrcode LIKE 'QR-SEED%'`, nunca por tabela inteira), e com
   consultas de verificação no final.
@@ -336,3 +336,20 @@ topo do arquivo, fácil de não notar antes de colar um SQL grande no phpMyAdmin
   harness em instâncias MySQL com usuários/credenciais completamente diferentes (o que
   já é o caso hoje, então o risco real é confusão de aba/janela do phpMyAdmin, não
   credencial compartilhada).
+
+### 2026-09-23 — harness quebrava do zero por ordem alfabética do `docker-entrypoint-initdb.d`
+
+**O que aconteceu:** `harness/db/incidente-2026-09-22-saneamento-producao.sql`
+morava na mesma pasta (`harness/db/`) montada como
+`/docker-entrypoint-initdb.d` no container do MySQL. O MySQL roda todo `.sql`
+dessa pasta em ordem alfabética — `incidente...` vem antes de `schema.sql` — então,
+num harness recriado do zero (`docker compose down -v` + `up`), o script de
+saneamento tentava rodar `UPDATE administradores` antes de `schema.sql` criar a
+tabela, o que dava erro e abortava a inicialização inteira do banco (nenhuma tabela
+chegava a ser criada). Só não tinha aparecido antes porque os testes anteriores
+reaproveitaram um volume de banco já inicializado.
+
+**Correção aplicada:** o script de incidente foi movido pra
+`harness/db/historico/`, fora da pasta auto-executada pelo MySQL — ele é de uso
+único contra produção mesmo, nunca fazia sentido rodar num harness que já começa
+vazio.

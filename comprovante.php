@@ -1,22 +1,21 @@
-
 <?php
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
 
-$inscricao_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$codigoQrcode = trim($_GET['codigo'] ?? '');
 
-if ($inscricao_id <= 0) {
+if ($codigoQrcode === '') {
     header('Location: /evento-fametro/index.php');
     exit;
 }
 
-// Buscar dados da inscrição e da palestra
-$sql = "SELECT i.*, p.titulo, p.palestrante, p.horario_inicio, p.horario_fim 
-        FROM inscricoes i 
-        JOIN palestras p ON i.palestra_id = p.id 
-        WHERE i.id = ?";
+// Buscar dados da inscrição e da palestra pelo código do QR Code (chave não sequencial)
+$sql = "SELECT i.*, p.titulo, p.palestrante, p.horario_inicio, p.horario_fim
+        FROM inscricoes i
+        JOIN palestras p ON i.palestra_id = p.id
+        WHERE i.codigo_qrcode = ?";
 $stmt = $pdo->prepare($sql);
-$stmt->execute([$inscricao_id]);
+$stmt->execute([$codigoQrcode]);
 $dados = $stmt->fetch();
 
 if (!$dados) {

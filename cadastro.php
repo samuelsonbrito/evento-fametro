@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
@@ -32,26 +31,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($nome_aluno) && !empty($email)) {
         try {
             // Verificar se já existe inscrição para este e-mail nesta palestra
-            $stmtCheck = $pdo->prepare("SELECT id FROM inscricoes WHERE palestra_id = ? AND email = ?");
+            $stmtCheck = $pdo->prepare("SELECT codigo_qrcode FROM inscricoes WHERE palestra_id = ? AND email = ?");
             $stmtCheck->execute([$palestra_id, $email]);
             $jaInscrito = $stmtCheck->fetch();
 
             if ($jaInscrito) {
                 // Se já estiver inscrito, redireciona direto para o comprovante
-                header('Location: /evento-fametro/comprovante.php?id=' . $jaInscrito['id']);
+                header('Location: /evento-fametro/comprovante.php?codigo=' . urlencode($jaInscrito['codigo_qrcode']));
                 exit;
             } else {
                 $codigo_qrcode = 'QR-' . strtoupper(uniqid());
 
-                $sql = "INSERT INTO inscricoes (palestra_id, nome_aluno, email, tipo_participante, matricula, codigo_qrcode) 
+                $sql = "INSERT INTO inscricoes (palestra_id, nome_aluno, email, tipo_participante, matricula, codigo_qrcode)
                         VALUES (?, ?, ?, ?, ?, ?)";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([$palestra_id, $nome_aluno, $email, $tipo_participante, $matricula, $codigo_qrcode]);
 
-                $novo_id = $pdo->lastInsertId();
-
                 // Redireciona para a página de comprovante oficial
-                header('Location: /evento-fametro/comprovante.php?id=' . $novo_id);
+                header('Location: /evento-fametro/comprovante.php?codigo=' . urlencode($codigo_qrcode));
                 exit;
             }
         } catch (PDOException $e) {

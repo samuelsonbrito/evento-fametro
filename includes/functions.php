@@ -1,7 +1,48 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+
+// Detecta HTTPS mesmo atrás de um proxy reverso — o site passa pelo proxy da Umbler
+// em produção, então $_SERVER['HTTPS'] sozinho pode não refletir o que o navegador
+// do visitante realmente usou.
+function conexaoEhHttps() {
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        return true;
+    }
+    if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
+        return true;
+    }
+    return !empty($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443;
 }
+
+function iniciarSessaoSegura() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_set_cookie_params([
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+            'secure' => conexaoEhHttps(),
+        ]);
+        session_start();
+    }
+}
+
+iniciarSessaoSegura();
+
+// Headers de segurança — em toda página que passa por aqui, inclusive as APIs em
+// api/*.php. CSP em modo report-only de propósito: o app carrega recursos de
+// cdn.jsdelivr.net, unpkg.com, quickchart.io e actions.google.com, e usa bastante
+// estilo/script inline — uma política enforced mal calibrada quebraria isso sem
+// avisar. Depois de um tempo monitorando violações, trocar pra
+// "Content-Security-Policy" de verdade.
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header("Content-Security-Policy-Report-Only: default-src 'self'; "
+    . "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net unpkg.com; "
+    . "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; "
+    . "font-src 'self' cdn.jsdelivr.net; "
+    . "img-src 'self' data: quickchart.io; "
+    . "media-src 'self' actions.google.com; "
+    . "connect-src 'self';");
 
 // URL canônica de produção — usada nas tags de SEO (canonical, Open Graph, sitemap).
 // Fixa de propósito (não deriva de $_SERVER['HTTP_HOST']): evita que acesso por IP,

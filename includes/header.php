@@ -1,7 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+iniciarSessaoSegura();
 
 // Cada página pode definir $pageTitle/$pageDescription/$pageImage/$pageNoIndex/
 // $pageCanonical antes de dar require neste arquivo. Sem isso, cai nos padrões

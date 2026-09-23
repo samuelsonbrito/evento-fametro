@@ -59,6 +59,17 @@ function sanitize($data) {
     return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
 }
 
+// Só aceita http(s) — usado antes de gravar/renderizar URLs vindas de input
+// externo como href, pra barrar esquemas tipo javascript: (XSS armazenado).
+function urlEhSegura($url) {
+    if ($url === '') {
+        return false;
+    }
+    $partes = parse_url($url);
+    return isset($partes['scheme'], $partes['host'])
+        && in_array(strtolower($partes['scheme']), ['http', 'https'], true);
+}
+
 function verificarConflitoHorario($pdo, $matricula, $palestra_id) {
     $stmt = $pdo->prepare("SELECT horario_inicio, horario_fim FROM palestras WHERE id = ?");
     $stmt->execute([$palestra_id]);

@@ -190,7 +190,7 @@ require_once __DIR__ . '/../includes/header.php';
             'interno' => (int)$p['total_interno'],
             'externo' => (int)$p['total_externo'],
         ];
-    }, $palestras), JSON_UNESCAPED_UNICODE) ?>;
+    }, $palestras), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
     function truncar(texto, tamanho) {
       return texto.length > tamanho ? texto.slice(0, tamanho - 1) + '…' : texto;

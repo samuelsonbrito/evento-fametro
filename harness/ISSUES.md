@@ -188,6 +188,33 @@ corrigidos estão marcados abaixo, o resto é backlog.
    commit antes de considerar "pronto", mesmo em repositório que nunca vai receber
    push.
 
+20. **[CORRIGIDO em 2026-09-23] XSS armazenado via URL `javascript:` no campo
+    `pagina_url` do botão "Reportar problema".** `api/reportar_erro.php` grava `pagina_url` só com `sanitize()`
+    (`htmlspecialchars`), que escapa `<`, `>`, `"`, `'` mas não bloqueia o
+    esquema da URL. `admin/relatos-erro.php:115` usa esse valor direto num
+    atributo `href` (`<a href="<?= htmlspecialchars($r['pagina_url']) ?>"
+    target="_blank">`). Um atacante não precisa do site: o endpoint é público,
+    só exige um `csrf_token` válido — obtido visitando qualquer página, sem
+    login. Um POST direto pra `api/reportar_erro.php` com
+    `pagina_url=javascript:alert(document.domain)` grava normalmente (nenhum
+    caractere ali é escapado por `htmlspecialchars`), e o link malicioso fica
+    esperando um administrador clicar em "Página" na lista de relatos — o que é
+    um comportamento esperado dessa tela (conferir a página que a pessoa
+    reportou). Como o cookie de sessão é `HttpOnly`, não dá pra ler
+    `document.cookie` direto, mas o script roda com a origem do painel admin já
+    autenticado — dá pra fazer requisições em nome do admin (inclusive extrair
+    o `csrf_token` da página e disparar as próprias ações do painel, como
+    excluir relatos ou marcar como resolvido).
+
+    **Correção:** nova função `urlEhSegura()` em `includes/functions.php` (usa
+    `parse_url()` e só aceita esquema `http`/`https`). Aplicada em dois pontos
+    (defesa em profundidade): `api/reportar_erro.php` descarta (grava `NULL`)
+    qualquer `pagina_url` que não passe na checagem, e `admin/relatos-erro.php`
+    só renderiza como link clicável se a URL já salva passar na mesma checagem
+    — senão mostra como texto simples. Testado no harness: POST com
+    `pagina_url=javascript:alert(1)` é aceito (mensagem grava normalmente) mas
+    a URL não vira link; POST com URL `https://` normal continua virando link.
+
 ## Médio-Alto
 
 7b. **Checagem de duplicidade não bate com a constraint real do banco.**
@@ -229,6 +256,23 @@ corrigidos estão marcados abaixo, o resto é backlog.
     tipo MIME real nem o conteúdo. Um arquivo `.php` renomeado para `.jpg` seria aceito
     (embora não seja executável como PHP dentro de `uploads/` a menos que o servidor
     esteja mal configurado para isso — ainda assim, vale validar o conteúdo).
+
+21. **[CORRIGIDO em 2026-09-23] Sem rate limiting/anti-spam em
+    `api/reportar_erro.php`.** O endpoint do botão "Reportar problema" não
+    tinha nenhum limite de tentativas por IP/sessão — diferente do
+    `admin/login.php` (item 6). O `csrf_token` é reaproveitado durante toda a
+    sessão (por desenho, ver item 5), então um script com a mesma sessão
+    podia enviar milhares de relatos em loop, sem precisar buscar um token
+    novo a cada envio. Consequência: bloat da tabela `relatos_erro` e a tela
+    `admin/relatos-erro.php` ficando inutilizável (relato de verdade se
+    perdendo no meio de spam). **Correção:** reaproveitada a mesma
+    infraestrutura do rate limiting do login (`estaLimitadoPorTentativas()`/
+    `registrarTentativaFalha()`, tabela `tentativas_login`), com um
+    identificador prefixado (`relato:<IP>`) pra não colidir com as tentativas
+    de login do mesmo IP. Mesmo limite: 5 envios por IP a cada 15 minutos,
+    contando toda submissão (não só falhas, já que o objetivo aqui é limitar
+    volume). Testado no harness: 6º envio seguido retorna `429` com mensagem
+    de limite.
 
 ## Baixo / cosmético
 
@@ -294,6 +338,35 @@ corrigidos estão marcados abaixo, o resto é backlog.
     ataque nem passa por um form). Corrigir direito significa trocar de GET pra
     POST, o que muda como essa rota é usada hoje (link direto). Não resolvido ainda
     — ver plano de correção dos itens de risco Alto.
+
+22. **[CORRIGIDO em 2026-09-23] `json_encode()` sem `JSON_HEX_TAG` ao injetar
+    dados dentro de `<script>` em `admin/estatisticas.php:186`.** Os títulos de
+    palestra (`palestras.titulo`, só editável por um admin autenticado via
+    `admin/cadastrar-palestra.php`) são jogados dentro de uma tag `<script>`
+    via `json_encode(..., JSON_UNESCAPED_UNICODE)`. Por padrão, `json_encode()`
+    não escapa `<`/`>`, então um título contendo `</script><script>...`
+    quebraria pra fora da tag e executaria o que vier depois. Como só um admin
+    já autenticado consegue cadastrar palestra, era self-XSS de baixo impacto
+    (exigiria outro admin malicioso ou uma conta admin já comprometida por
+    outro meio) — mas era uma lacuna de defesa em profundidade barata de
+    fechar. **Correção:** adicionadas as flags `JSON_HEX_TAG | JSON_HEX_AMP` na
+    chamada. **Retestado no harness** cadastrando uma palestra com título
+    `</script><script>alert(1)</script>`: na prática o cenário descrito nunca
+    era explorável, porque `admin/cadastrar-palestra.php:14` já passa `titulo`
+    por `sanitize()` (`htmlspecialchars`) **antes** de gravar no banco — o
+    valor salvo já vem como `&lt;/script&gt;...`, nunca com `<`/`>` crus. A
+    correção com `JSON_HEX_TAG`/`JSON_HEX_AMP` continua valendo como defesa em
+    profundidade (protege qualquer inserção futura que não passe por
+    `sanitize()`, como um import em lote direto no banco), mas não havia
+    exploit real hoje dado o comportamento atual de `cadastrar-palestra.php`.
+
+23. **[CORRIGIDO em 2026-09-23] Link de `pagina_url` em
+    `admin/relatos-erro.php:115` usava `target="_blank"` sem
+    `rel="noopener noreferrer"`.** Mesmo corrigindo o item 20 (esquema
+    `javascript:`), um link `http(s)://` legítimo aberto assim ainda dava à
+    página de destino acesso a `window.opener`, permitindo redirecionar a aba
+    original do admin (reverse tabnabbing). Corrigido junto com o item 20 —
+    `rel="noopener noreferrer"` adicionado no mesmo `<a>`.
 
 ## Incidentes
 

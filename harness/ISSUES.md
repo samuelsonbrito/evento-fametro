@@ -105,11 +105,25 @@ corrigidos estão marcados abaixo, o resto é backlog.
    Combinado com o `SameSite=Lax` do item 6b, cobre tanto CSRF cross-site quanto
    same-site-mas-forjado.
 
-6. **Sem rate limiting.**
-   `admin/login.php` (força bruta de senha) e `api/validar_presenca.php`, agora que
-   exige sessão de admin (ver item 2c), fica menos exposto a martelamento externo —
-   mas ainda vale limitar tentativas por sessão/IP pra dificultar erro operacional em
-   massa no dia do evento.
+6. **[CORRIGIDO em 2026-09-23] Sem rate limiting no login admin.** `admin/login.php`
+   não tinha limite de tentativas — força bruta de senha era viável. Corrigido: nova
+   tabela `tentativas_login` (identificador = IP do cliente, priorizando
+   `X-Forwarded-For` sobre `REMOTE_ADDR` — o site passa pelo proxy da Umbler);
+   `estaLimitadoPorTentativas()`/`registrarTentativaFalha()`/`limparTentativas()` em
+   `includes/functions.php`. Bloqueia depois de 5 tentativas erradas em 15 minutos,
+   mesmo que a próxima tentativa use a senha certa (só destrava depois que a janela
+   passa, ou fica valendo de novo a partir da tentativa seguinte). Login bem-sucedido
+   limpa o contador. Testado no harness: 6ª tentativa errada bloqueia; janela
+   simulada como expirada libera de novo e reseta a tabela no login certo.
+   `api/validar_presenca.php` já exige sessão de admin desde o item 2c, então fica
+   coberto indiretamente pelo mesmo rate limiting do login — não precisou de limite
+   próprio.
+
+   **Ressalva**: limitar por IP depende de identificar corretamente o IP real do
+   visitante atrás do proxy da Umbler. Vale conferir depois do deploy que tentativas
+   de pessoas diferentes não estão sendo agrupadas por engano (o que bloquearia
+   gente de verdade junto com um possível atacante) — checar se
+   `X-Forwarded-For` chega populado de verdade em produção.
 
 6b. **[CORRIGIDO em 2026-09-23] Cookie de sessão sem `Secure`/`HttpOnly`/`SameSite`.**
    Adicionada `iniciarSessaoSegura()` em `includes/functions.php`, chamada antes de

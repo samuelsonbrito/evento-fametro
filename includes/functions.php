@@ -116,3 +116,42 @@ function validarTokenCSRF($token) {
     return !empty($_SESSION['csrf_token']) && !empty($token)
         && hash_equals($_SESSION['csrf_token'], $token);
 }
+
+// Rate limiting do login admin — por IP, guardado na tabela tentativas_login.
+define('RATE_LIMIT_MAX_TENTATIVAS', 5);
+define('RATE_LIMIT_JANELA_MINUTOS', 15);
+
+// Prioriza X-Forwarded-For sobre REMOTE_ADDR — o site passa pelo proxy da Umbler em
+// produção, então REMOTE_ADDR sozinho mostraria o IP do proxy, não do visitante.
+function ipDoCliente() {
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        return trim($ips[0]);
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? 'desconhecido';
+}
+
+function estaLimitadoPorTentativas($pdo, $identificador) {
+    $stmt = $pdo->prepare(
+        "SELECT 1 FROM tentativas_login
+         WHERE identificador = ? AND tentativas >= ? AND ultima_tentativa >= NOW() - INTERVAL ? MINUTE"
+    );
+    $stmt->execute([$identificador, RATE_LIMIT_MAX_TENTATIVAS, RATE_LIMIT_JANELA_MINUTOS]);
+    return (bool) $stmt->fetchColumn();
+}
+
+function registrarTentativaFalha($pdo, $identificador) {
+    $stmt = $pdo->prepare(
+        "INSERT INTO tentativas_login (identificador, tentativas, ultima_tentativa)
+         VALUES (?, 1, NOW())
+         ON DUPLICATE KEY UPDATE
+            tentativas = IF(ultima_tentativa < NOW() - INTERVAL ? MINUTE, 1, tentativas + 1),
+            ultima_tentativa = NOW()"
+    );
+    $stmt->execute([$identificador, RATE_LIMIT_JANELA_MINUTOS]);
+}
+
+function limparTentativas($pdo, $identificador) {
+    $stmt = $pdo->prepare("DELETE FROM tentativas_login WHERE identificador = ?");
+    $stmt->execute([$identificador]);
+}

@@ -30,6 +30,7 @@ DROP TABLE IF EXISTS inscricoes;
 -- 2. Apaga as restantes tabelas
 DROP TABLE IF EXISTS palestras;
 DROP TABLE IF EXISTS administradores;
+DROP TABLE IF EXISTS tentativas_login;
 
 -- 3. Cria a tabela 'administradores'
 CREATE TABLE administradores (
@@ -93,6 +94,19 @@ CREATE TABLE inscricoes (
   UNIQUE KEY uk_aluno_palestra (matricula,palestra_id),
   KEY palestra_id (palestra_id),
   CONSTRAINT inscricoes_ibfk_1 FOREIGN KEY (palestra_id) REFERENCES palestras (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. Cria a tabela 'tentativas_login' (rate limiting no login admin — ver ISSUES.md
+-- item 6). Adicionada em 2026-09-23; se produção já tiver as 3 tabelas anteriores
+-- criadas manualmente antes desta data, rodar só este CREATE TABLE lá (nunca o
+-- schema.sql inteiro, ver aviso no topo deste arquivo).
+CREATE TABLE tentativas_login (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  identificador varchar(255) NOT NULL,
+  tentativas int(11) NOT NULL DEFAULT 1,
+  ultima_tentativa timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (id),
+  UNIQUE KEY identificador (identificador)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -5,10 +5,13 @@ require_once __DIR__ . '/../includes/functions.php';
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $ip = ipDoCliente();
     $usuario = sanitize($_POST['usuario'] ?? '');
     $senha = $_POST['senha'] ?? '';
 
-    if (!validarTokenCSRF($_POST['csrf_token'] ?? '')) {
+    if (estaLimitadoPorTentativas($pdo, $ip)) {
+        $erro = 'Muitas tentativas de login. Tente novamente em alguns minutos.';
+    } elseif (!validarTokenCSRF($_POST['csrf_token'] ?? '')) {
         $erro = 'Sessão expirada. Atualize a página e tente novamente.';
     } elseif (!empty($usuario) && !empty($senha)) {
         try {
@@ -31,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmtUpgrade->execute([$novoHash, $admin['id']]);
                 }
 
+                limparTentativas($pdo, $ip);
                 session_regenerate_id(true);
                 $_SESSION['admin_logged'] = true;
                 $_SESSION['admin_user'] = $admin['usuario'];
@@ -38,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: /admin/index.php');
                 exit;
             } else {
+                registrarTentativaFalha($pdo, $ip);
                 $erro = 'Usuário ou senha incorretos.';
             }
         } catch (PDOException $e) {

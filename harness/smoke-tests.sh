@@ -194,6 +194,84 @@ fi
 rm -f "$REPORT_JAR"
 
 echo
+echo "-- Consultar Inscrição --"
+check_body_contains "Link \"Consultar Inscrição\" aparece no header" 'consultar-inscricao.php' "$BASE_URL/index.php"
+
+CONS_JAR="$(mktemp)"
+cons_token="$(curl -s -c "$CONS_JAR" "$BASE_URL/consultar-inscricao.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
+
+resp_cons_sem_csrf="$(curl -s -X POST -d 'email=ana.lima@exemplo.com' "$BASE_URL/consultar-inscricao.php")"
+if printf '%s' "$resp_cons_sem_csrf" | grep -qF "Sessão expirada"; then
+    echo "PASS  consultar-inscricao.php rejeita POST sem csrf_token"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  consultar-inscricao.php deveria rejeitar POST sem csrf_token — veio: $resp_cons_sem_csrf"
+    FAIL=$((FAIL+1))
+fi
+
+resp_cons_um="$(curl -s -b "$CONS_JAR" -X POST \
+    --data-urlencode "csrf_token=$cons_token" --data-urlencode "email=ana.lima@exemplo.com" \
+    "$BASE_URL/consultar-inscricao.php")"
+if printf '%s' "$resp_cons_um" | grep -qF "QR-SEEDCONFIRMADO01"; then
+    echo "PASS  E-mail com 1 inscrição encontra o QR Code certo"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  E-mail com 1 inscrição deveria linkar pro código QR-SEEDCONFIRMADO01 — veio: $resp_cons_um"
+    FAIL=$((FAIL+1))
+fi
+
+cons_token2="$(curl -s -b "$CONS_JAR" -c "$CONS_JAR" "$BASE_URL/consultar-inscricao.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
+resp_cons_multi="$(curl -s -b "$CONS_JAR" -X POST \
+    --data-urlencode "csrf_token=$cons_token2" --data-urlencode "email=bruno.costa@exemplo.com" \
+    --data-urlencode "matricula=202310456" \
+    "$BASE_URL/consultar-inscricao.php")"
+if printf '%s' "$resp_cons_multi" | grep -qF "QR-SEEDPENDENTE01" && printf '%s' "$resp_cons_multi" | grep -qF "QR-SEEDPENDENTE02"; then
+    echo "PASS  E-mail com 2 inscrições + matrícula certa lista as duas"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  Deveria listar QR-SEEDPENDENTE01 e QR-SEEDPENDENTE02 — veio: $resp_cons_multi"
+    FAIL=$((FAIL+1))
+fi
+
+cons_token3="$(curl -s -b "$CONS_JAR" -c "$CONS_JAR" "$BASE_URL/consultar-inscricao.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
+resp_cons_matricula_errada="$(curl -s -b "$CONS_JAR" -X POST \
+    --data-urlencode "csrf_token=$cons_token3" --data-urlencode "email=bruno.costa@exemplo.com" \
+    --data-urlencode "matricula=000000000" \
+    "$BASE_URL/consultar-inscricao.php")"
+if printf '%s' "$resp_cons_matricula_errada" | grep -qF "Nenhuma inscrição encontrada"; then
+    echo "PASS  E-mail certo + matrícula errada não encontra nada"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  Matrícula errada deveria zerar o resultado — veio: $resp_cons_matricula_errada"
+    FAIL=$((FAIL+1))
+fi
+
+cons_token4="$(curl -s -b "$CONS_JAR" -c "$CONS_JAR" "$BASE_URL/consultar-inscricao.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
+resp_cons_externo="$(curl -s -b "$CONS_JAR" -X POST \
+    --data-urlencode "csrf_token=$cons_token4" --data-urlencode "email=carla.mendes@exemplo.com" \
+    "$BASE_URL/consultar-inscricao.php")"
+if printf '%s' "$resp_cons_externo" | grep -qF "QR-SEEDEXTERNO01"; then
+    echo "PASS  Público externo (sem matrícula) encontra a própria inscrição"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  Deveria encontrar QR-SEEDEXTERNO01 pro e-mail externo — veio: $resp_cons_externo"
+    FAIL=$((FAIL+1))
+fi
+
+cons_token5="$(curl -s -b "$CONS_JAR" -c "$CONS_JAR" "$BASE_URL/consultar-inscricao.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
+resp_cons_inexistente="$(curl -s -b "$CONS_JAR" -X POST \
+    --data-urlencode "csrf_token=$cons_token5" --data-urlencode "email=ninguem@exemplo.com" \
+    "$BASE_URL/consultar-inscricao.php")"
+if printf '%s' "$resp_cons_inexistente" | grep -qF "Nenhuma inscrição encontrada"; then
+    echo "PASS  E-mail inexistente mostra a mesma mensagem genérica"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  E-mail inexistente deveria mostrar mensagem genérica — veio: $resp_cons_inexistente"
+    FAIL=$((FAIL+1))
+fi
+rm -f "$CONS_JAR"
+
+echo
 echo "-- Headers de segurança e cookie de sessão --"
 check_header_contains "X-Content-Type-Options presente"  "X-Content-Type-Options: nosniff" "$BASE_URL/index.php"
 check_header_contains "X-Frame-Options presente"         "X-Frame-Options: DENY" "$BASE_URL/index.php"
@@ -343,6 +421,31 @@ if [ "$rrl_bloqueado" -eq 1 ]; then
     PASS=$((PASS+1))
 else
     echo "FAIL  api/reportar_erro.php deveria ter bloqueado depois de tentativas repetidas"
+    FAIL=$((FAIL+1))
+fi
+
+echo
+echo "-- Rate limiting em consultar-inscricao.php (roda por último, mesmo motivo acima) --"
+echo "   (a seção \"Consultar Inscrição\", mais acima, já consumiu 5 das tentativas)"
+CIRL_JAR="$(mktemp)"
+cirl_bloqueado=0
+for i in 1 2 3; do
+    cirl_token="$(curl -s -c "$CIRL_JAR" "$BASE_URL/consultar-inscricao.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
+    cirl_resp="$(curl -s -b "$CIRL_JAR" -c "$CIRL_JAR" -X POST \
+        --data-urlencode "csrf_token=$cirl_token" \
+        --data-urlencode "email=ninguem-$i@exemplo.com" \
+        "$BASE_URL/consultar-inscricao.php")"
+    if printf '%s' "$cirl_resp" | grep -qF "Muitas consultas"; then
+        cirl_bloqueado=1
+        break
+    fi
+done
+rm -f "$CIRL_JAR"
+if [ "$cirl_bloqueado" -eq 1 ]; then
+    echo "PASS  consultar-inscricao.php bloqueia depois de tentativas repetidas"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  consultar-inscricao.php deveria ter bloqueado depois de tentativas repetidas"
     FAIL=$((FAIL+1))
 fi
 

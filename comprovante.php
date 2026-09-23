@@ -23,6 +23,10 @@ if (!$dados) {
     exit;
 }
 
+$pageTitle = 'Comprovante de Inscrição | Jornada Acadêmica Imersão FAMETRO';
+$pageDescription = 'Comprovante de inscrição e QR Code de credenciamento para a Jornada Acadêmica Imersão FAMETRO.';
+$pageNoIndex = true; // Contém dados pessoais do inscrito — nunca deve ir pro índice do Google.
+
 require_once __DIR__ . '/includes/header.php';
 
 $codigoQR = $dados['codigo_qrcode'];

@@ -46,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$pageTitle = 'Login Administrativo | Jornada Acadêmica Imersão FAMETRO';
+$pageNoIndex = true;
+
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

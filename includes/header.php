@@ -2,14 +2,43 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// Cada página pode definir $pageTitle/$pageDescription/$pageImage/$pageNoIndex/
+// $pageCanonical antes de dar require neste arquivo. Sem isso, cai nos padrões
+// abaixo (bons o bastante pra home, mas genéricos demais pra páginas internas).
+$pageTitle       = $pageTitle ?? 'Jornada Acadêmica Imersão FAMETRO — Inscrições Abertas';
+$pageDescription = $pageDescription ?? 'Inscreva-se gratuitamente na Jornada Acadêmica Imersão FAMETRO, dia 2 de outubro. Palestras sobre Inteligência Artificial, até 15h complementares e credenciamento por QR Code.';
+$pageImage       = $pageImage ?? SITE_URL . '/evento-fametro/assets/img/principal.png';
+$pageNoIndex     = $pageNoIndex ?? false;
+$pageCanonical   = $pageCanonical ?? SITE_URL . ($_SERVER['REQUEST_URI'] ?? '/evento-fametro/index.php');
 ?>
 <!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-    <title>Jornada Acadêmica Imersão FAMETRO</title>
-    
+    <title><?= htmlspecialchars($pageTitle) ?></title>
+    <meta name="description" content="<?= htmlspecialchars($pageDescription) ?>"/>
+    <meta name="robots" content="<?= $pageNoIndex ? 'noindex, nofollow' : 'index, follow' ?>"/>
+    <link rel="canonical" href="<?= htmlspecialchars($pageCanonical) ?>"/>
+
+    <!-- Open Graph / compartilhamento em redes sociais -->
+    <meta property="og:type" content="website"/>
+    <meta property="og:locale" content="pt_BR"/>
+    <meta property="og:site_name" content="Jornada Acadêmica Imersão FAMETRO"/>
+    <meta property="og:title" content="<?= htmlspecialchars($pageTitle) ?>"/>
+    <meta property="og:description" content="<?= htmlspecialchars($pageDescription) ?>"/>
+    <meta property="og:url" content="<?= htmlspecialchars($pageCanonical) ?>"/>
+    <meta property="og:image" content="<?= htmlspecialchars($pageImage) ?>"/>
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:title" content="<?= htmlspecialchars($pageTitle) ?>"/>
+    <meta name="twitter:description" content="<?= htmlspecialchars($pageDescription) ?>"/>
+    <meta name="twitter:image" content="<?= htmlspecialchars($pageImage) ?>"/>
+
+    <link rel="icon" href="/evento-fametro/assets/img/logo-fametro.png" type="image/png"/>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
     <link rel="stylesheet" href="/evento-fametro/assets/css/style.css">

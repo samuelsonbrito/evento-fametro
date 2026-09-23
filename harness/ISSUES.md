@@ -152,7 +152,10 @@ corrigidos estão marcados abaixo, o resto é backlog.
 12. `display_errors`/`display_startup_errors` ligados em `config/database.php`, com o
     comentário "durante os testes" — mas é o arquivo usado em produção também.
 13. Não há `.gitignore` nem repositório git inicializado — nenhum histórico de mudanças.
-14. Não há `README.md` na raiz do projeto explicando como rodar/implantar.
+14. **[CORRIGIDO em 2026-09-22]** Não havia `README.md` na raiz do projeto explicando
+    como rodar/implantar. Adicionado `README.md` cobrindo funcionalidades, stack,
+    modelo de dados, fluxo da aplicação, como rodar o harness local, configuração via
+    `.env`, testes, segurança e deploy.
 15. `inscricoes.palestra_id` é `ON DELETE CASCADE` (confirmado no dump real) — apagar
     uma palestra apaga silenciosamente todas as inscrições dela, sem aviso. Hoje não há
     nenhuma tela de admin para apagar palestra, então é inofensivo por enquanto, mas

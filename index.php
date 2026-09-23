@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
@@ -51,7 +50,7 @@ try {
 
       <!-- Título Principal -->
       <h1 class="fw-bold mb-2 text-white text-uppercase" style="font-size: 2.3rem; letter-spacing: -0.5px;">
-        Jornada Acadêmica <span style="color: #ff4d5a;">Imersão FAMETRO</span>
+        Jornada Acadêmica <span style="color: #ff4d5a;">Imersão IA FAMETRO</span>
       </h1>
 
       <!-- Descrição -->

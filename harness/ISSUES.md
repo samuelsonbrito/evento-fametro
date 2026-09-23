@@ -46,6 +46,31 @@ corrigidos estão marcados abaixo, o resto é backlog.
    `harness/db/incidente-2026-09-22-saneamento-producao.sql` +
    `harness/tools/hash-password.php`.
 
+2b. **[CORRIGIDO em 2026-09-22] IDOR em `comprovante.php`/`ticket.php` — dados de
+   qualquer inscrito expostos por ID sequencial.**
+   As duas páginas aceitavam `?id=N` sem nenhuma checagem de posse e devolviam nome,
+   e-mail, matrícula e o `codigo_qrcode` completo de quem quer que fosse o dono daquele
+   ID. Bastava trocar o número na URL (`?id=1`, `?id=2`, `?id=3`...) pra enumerar todos
+   os inscritos do evento. Corrigido: as duas páginas passaram a buscar por
+   `?codigo=` usando a coluna `codigo_qrcode` (já `UNIQUE` no banco), que não é
+   sequencial nem adivinhável. Os três pontos que geravam esses links
+   (`cadastro.php` x2, `api/cadastrar_aluno.php`) foram atualizados pra redirecionar
+   por `codigo` em vez de `id`.
+
+2c. **[CORRIGIDO em 2026-09-22] `api/validar_presenca.php` e
+   `admin/confirmar-presenca.php` confirmavam presença sem nenhuma autenticação.**
+   A tela `admin/validar-qrcode.php` é protegida por `checarAutenticacaoAdmin()`, mas
+   a API que ela chama por trás (`api/validar_presenca.php`) não checava sessão
+   nenhuma — qualquer requisição POST direta com um `codigo_qrcode` válido confirmava
+   presença. Como esse código aparece em texto puro na própria página do comprovante
+   do participante, isso permitia a um aluno confirmar a própria presença remotamente,
+   sem estar fisicamente no evento — quebrando o propósito do credenciamento por QR
+   Code. `admin/confirmar-presenca.php` (ver item 16) tinha o mesmo problema, ainda
+   mais grave por estar dentro da pasta `admin/` sem seguir o padrão de todo o resto
+   dela. Corrigido: `api/validar_presenca.php` agora retorna `401` em JSON se
+   `$_SESSION['admin_logged']` não estiver definido, e `admin/confirmar-presenca.php`
+   ganhou a chamada `checarAutenticacaoAdmin()` que faltava.
+
 3. **Mensagens de exceção do banco expostas ao usuário final.**
    `cadastro.php:58`, `admin/login.php:29`, `admin/cadastrar-palestra.php:52` — todos
    fazem `"Erro ao processar: " . $e->getMessage()` e imprimem isso na tela. Vaza
@@ -69,14 +94,16 @@ corrigidos estão marcados abaixo, o resto é backlog.
    nome de uma sessão de admin já autenticada.
 
 6. **Sem rate limiting.**
-   `admin/login.php` (força bruta de senha) e `api/validar_presenca.php` (poderia ser
-   martelado para tentar descobrir códigos de QR válidos por tentativa e erro, já que
-   aceita `i.id` numérico como alternativa ao código).
+   `admin/login.php` (força bruta de senha) e `api/validar_presenca.php`, agora que
+   exige sessão de admin (ver item 2c), fica menos exposto a martelamento externo —
+   mas ainda vale limitar tentativas por sessão/IP pra dificultar erro operacional em
+   massa no dia do evento.
 
-7. **`api/validar_presenca.php` aceita `i.id` como código válido.**
-   Linha 46-47: a query casa `codigo_qrcode` OU `i.id`. Isso significa que digitar
-   manualmente um ID pequeno (`1`, `2`, `3`...) no campo "código manual" do validador
-   confirma presença de qualquer inscrição, sem precisar do QR Code real.
+7. **[CORRIGIDO em 2026-09-22] `api/validar_presenca.php` aceitava `i.id` como código
+   válido.** A query casava `codigo_qrcode` OU `i.id`, então digitar um ID pequeno
+   (`1`, `2`, `3`...) no campo "código manual" do validador confirmava presença de
+   qualquer inscrição, sem precisar do QR Code real. Corrigido junto com o item 2b —
+   a query só casa mais `codigo_qrcode` (exato ou case-insensitive), nunca `id`.
 
 ## Médio-Alto
 
@@ -131,9 +158,27 @@ corrigidos estão marcados abaixo, o resto é backlog.
     nenhuma tela de admin para apagar palestra, então é inofensivo por enquanto, mas
     vale lembrar disso se essa funcionalidade for adicionada no futuro (pedir
     confirmação explícita, ou trocar para `ON DELETE RESTRICT`/soft delete).
-16. `admin/confirmar-presenca.php` parece ser uma rota antiga (fluxo por link/GET com
-    `?code=`) não referenciada por nenhum outro arquivo lido — possível código morto,
-    mas mantenha até confirmar que nenhum e-mail/QR antigo ainda aponta pra ela.
+16. **[CORRIGIDO/RECLASSIFICADO em 2026-09-22]** `admin/confirmar-presenca.php` era
+    descrito aqui como "possível código morto" por não ser referenciada por nenhum
+    outro arquivo — mas isso subestimava o risco: é um `.php` publicamente acessível
+    num repositório público, referenciada ou não. Era, na prática, o único arquivo em
+    `admin/` sem `checarAutenticacaoAdmin()`, permitindo confirmar presença de
+    qualquer inscrição sem login (ver item 2c, onde foi corrigida). Mantida no
+    projeto — não é código morto, é uma rota alternativa por link (`?code=`) agora
+    devidamente protegida.
+
+17. **[CORRIGIDO em 2026-09-22] Linha em branco antes de `<?php` quebrava
+    `header()`/redirects em 12 arquivos.** `index.php`, `cadastro.php`,
+    `comprovante.php`, `ticket.php`, `api/validar_presenca.php` e mais 7 em `admin/`
+    tinham uma linha em branco antes da tag de abertura. Com `output_buffering`
+    desligado (como no harness Docker), isso gera saída antes de qualquer
+    `header()`, que passa a falhar silenciosamente ("headers already sent") — o
+    `exit;` logo depois ainda impedia vazamento de dados, mas o redirect de verdade
+    nunca saía, só um warning feio. Não achamos evidência de que isso afete a
+    produção (hosts compartilhados costumam ligar `output_buffering` por padrão,
+    o que mascararia o problema), mas foi corrigido em todos os 12 arquivos por
+    segurança e para os redirects funcionarem de forma confiável em qualquer
+    ambiente.
 
 ## Incidentes
 

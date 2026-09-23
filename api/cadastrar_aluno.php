@@ -43,10 +43,8 @@ try {
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$nome_aluno, $matricula, $email, $palestra_id, $codigo_qrcode]);
 
-    $inscricao_id = $pdo->lastInsertId();
-
     // Redireciona para o Ticket de Confirmação
-    header("Location: /evento-fametro/ticket.php?id={$inscricao_id}");
+    header("Location: /evento-fametro/ticket.php?codigo=" . urlencode($codigo_qrcode));
     exit;
 
 } catch (PDOException $e) {

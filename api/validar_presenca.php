@@ -1,8 +1,13 @@
-
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
+
+if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
+    http_response_code(401);
+    echo json_encode(['sucesso' => false, 'mensagem' => 'Não autenticado. Faça login no painel administrativo.']);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['sucesso' => false, 'mensagem' => 'Método de requisição inválido.']);
@@ -39,15 +44,14 @@ $codigoLimpo = trim($codigoLimpo);
 
 try {
     // Buscar no banco de dados flexibilizando comparações
-    $sql = "SELECT i.*, p.titulo AS palestra_titulo 
-            FROM inscricoes i 
-            LEFT JOIN palestras p ON i.palestra_id = p.id 
-            WHERE TRIM(i.codigo_qrcode) = ? 
-               OR i.id = ? 
+    $sql = "SELECT i.*, p.titulo AS palestra_titulo
+            FROM inscricoes i
+            LEFT JOIN palestras p ON i.palestra_id = p.id
+            WHERE TRIM(i.codigo_qrcode) = ?
                OR LOWER(TRIM(i.codigo_qrcode)) = LOWER(?)";
-            
+
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$codigoLimpo, $codigoLimpo, $codigoLimpo]);
+    $stmt->execute([$codigoLimpo, $codigoLimpo]);
     $inscricao = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$inscricao) {

@@ -177,6 +177,20 @@ else
     echo "FAIL  api/reportar_erro.php deveria aceitar relato válido — veio: $resp_report_ok"
     FAIL=$((FAIL+1))
 fi
+
+resp_report_js="$(curl -s -b "$REPORT_JAR" -X POST \
+    --data-urlencode "csrf_token=$report_token" \
+    --data-urlencode "tipo=erro" \
+    --data-urlencode "mensagem=Teste de URL perigosa" \
+    --data-urlencode "pagina_url=javascript:alert(1)" \
+    "$BASE_URL/api/reportar_erro.php")"
+if printf '%s' "$resp_report_js" | grep -qF '"ok":true'; then
+    echo "PASS  api/reportar_erro.php aceita o relato mesmo com pagina_url perigosa (mas descarta a URL, ver checagem abaixo)"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  api/reportar_erro.php deveria aceitar o relato (só descartando a pagina_url) — veio: $resp_report_js"
+    FAIL=$((FAIL+1))
+fi
 rm -f "$REPORT_JAR"
 
 echo
@@ -267,6 +281,15 @@ if [ -n "${HARNESS_ADMIN_USER:-}" ] && [ -n "${HARNESS_ADMIN_PASS:-}" ]; then
         FAIL=$((FAIL+1))
     fi
 
+    resp_relatos="$(curl -s -b "$COOKIE_JAR" "$BASE_URL/admin/relatos-erro.php?status=todos")"
+    if printf '%s' "$resp_relatos" | grep -qi 'href="javascript:'; then
+        echo "FAIL  admin/relatos-erro.php renderizou um link javascript: (XSS armazenado)"
+        FAIL=$((FAIL+1))
+    else
+        echo "PASS  admin/relatos-erro.php não renderiza pagina_url com esquema perigoso como link"
+        PASS=$((PASS+1))
+    fi
+
     rm -f "$COOKIE_JAR"
 else
     echo "SKIP  Defina HARNESS_ADMIN_USER e HARNESS_ADMIN_PASS pra rodar o caminho feliz autenticado"
@@ -294,6 +317,32 @@ if [ "$rl_bloqueado" -eq 1 ]; then
     PASS=$((PASS+1))
 else
     echo "FAIL  Login deveria ter sido bloqueado depois de 6 tentativas erradas"
+    FAIL=$((FAIL+1))
+fi
+
+echo
+echo "-- Rate limiting em api/reportar_erro.php (roda por último, mesmo motivo acima) --"
+echo "   (a seção \"Botão Reportar problema\", mais acima, já consumiu 2 das tentativas)"
+RRL_JAR="$(mktemp)"
+rrl_bloqueado=0
+for i in 1 2 3 4 5; do
+    rrl_token="$(curl -s -c "$RRL_JAR" "$BASE_URL/index.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
+    rrl_resp="$(curl -s -b "$RRL_JAR" -c "$RRL_JAR" -X POST \
+        --data-urlencode "csrf_token=$rrl_token" \
+        --data-urlencode "tipo=erro" \
+        --data-urlencode "mensagem=Teste de rate limiting $i" \
+        "$BASE_URL/api/reportar_erro.php")"
+    if printf '%s' "$rrl_resp" | grep -qF "Muitos relatos"; then
+        rrl_bloqueado=1
+        break
+    fi
+done
+rm -f "$RRL_JAR"
+if [ "$rrl_bloqueado" -eq 1 ]; then
+    echo "PASS  api/reportar_erro.php bloqueia depois de tentativas repetidas"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  api/reportar_erro.php deveria ter bloqueado depois de tentativas repetidas"
     FAIL=$((FAIL+1))
 fi
 

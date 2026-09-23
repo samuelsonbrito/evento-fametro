@@ -111,8 +111,10 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                   </td>
                   <td class="text-truncate" style="max-width: 200px;">
-                    <?php if (!empty($r['pagina_url'])): ?>
-                      <a href="<?= htmlspecialchars($r['pagina_url']) ?>" target="_blank" class="small"><?= htmlspecialchars($r['pagina_url']) ?></a>
+                    <?php if (!empty($r['pagina_url']) && urlEhSegura($r['pagina_url'])): ?>
+                      <a href="<?= htmlspecialchars($r['pagina_url']) ?>" target="_blank" rel="noopener noreferrer" class="small"><?= htmlspecialchars($r['pagina_url']) ?></a>
+                    <?php elseif (!empty($r['pagina_url'])): ?>
+                      <span class="small text-muted"><?= htmlspecialchars($r['pagina_url']) ?></span>
                     <?php endif; ?>
                   </td>
                   <td class="text-end pe-3 text-nowrap">

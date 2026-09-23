@@ -16,12 +16,23 @@ if (!validarTokenCSRF($_POST['csrf_token'] ?? '')) {
     exit;
 }
 
+// Reaproveita a mesma infraestrutura de rate limiting do login admin (tabela
+// tentativas_login), com um identificador prefixado pra não colidir com as
+// tentativas de login do mesmo IP.
+$identificadorRelato = 'relato:' . ipDoCliente();
+if (estaLimitadoPorTentativas($pdo, $identificadorRelato)) {
+    http_response_code(429);
+    echo json_encode(['ok' => false, 'erro' => 'Muitos relatos enviados. Tente novamente em alguns minutos.']);
+    exit;
+}
+
 $tiposValidos = ['erro', 'sugestao', 'outro'];
 $tipo = in_array($_POST['tipo'] ?? '', $tiposValidos, true) ? $_POST['tipo'] : 'erro';
 $mensagem = trim($_POST['mensagem'] ?? '');
 $nome = sanitize($_POST['nome'] ?? '');
 $email = sanitize($_POST['email'] ?? '');
-$paginaUrl = sanitize($_POST['pagina_url'] ?? '');
+$paginaUrlBruta = trim($_POST['pagina_url'] ?? '');
+$paginaUrl = urlEhSegura($paginaUrlBruta) ? sanitize($paginaUrlBruta) : '';
 $userAgent = sanitize($_SERVER['HTTP_USER_AGENT'] ?? '');
 
 if ($mensagem === '') {
@@ -44,6 +55,7 @@ try {
         $userAgent !== '' ? substr($userAgent, 0, 255) : null,
     ]);
 
+    registrarTentativaFalha($pdo, $identificadorRelato);
     echo json_encode(['ok' => true]);
 } catch (PDOException $e) {
     error_log('Erro ao salvar relato (api/reportar_erro.php): ' . $e->getMessage());

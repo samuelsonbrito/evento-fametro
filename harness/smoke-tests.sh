@@ -18,6 +18,12 @@
 # HARNESS_ADMIN_USER e HARNESS_ADMIN_PASS (gere o hash com harness/tools/hash-password.php
 # e grave em administradores.senha antes de rodar):
 #   HARNESS_ADMIN_USER=admin HARNESS_ADMIN_PASS=sua-senha-de-teste bash harness/smoke-tests.sh
+#
+# O teste de rate limiting roda por último de propósito e termina com o IP de quem
+# rodou o script bloqueado por até 15 minutos (ver RATE_LIMIT_JANELA_MINUTOS em
+# includes/functions.php) — rodar o script de novo logo em seguida pode mostrar
+# "Muitas tentativas" no teste de login autenticado até a janela passar. Isso é
+# esperado, não é falha do rate limiting.
 
 set -u
 
@@ -221,6 +227,31 @@ if [ -n "${HARNESS_ADMIN_USER:-}" ] && [ -n "${HARNESS_ADMIN_PASS:-}" ]; then
     rm -f "$COOKIE_JAR"
 else
     echo "SKIP  Defina HARNESS_ADMIN_USER e HARNESS_ADMIN_PASS pra rodar o caminho feliz autenticado"
+fi
+
+echo
+echo "-- Rate limiting no login admin (roda por último, bloqueia o IP de teste) --"
+RL_JAR="$(mktemp)"
+rl_bloqueado=0
+for i in 1 2 3 4 5 6; do
+    rl_token="$(curl -s -c "$RL_JAR" "$BASE_URL/admin/login.php" | grep -oP 'name="csrf_token" value="\K[^"]*')"
+    rl_resp="$(curl -s -b "$RL_JAR" -c "$RL_JAR" -X POST \
+        --data-urlencode "csrf_token=$rl_token" \
+        --data-urlencode "usuario=admin" \
+        --data-urlencode "senha=senha-de-teste-errada-$i" \
+        "$BASE_URL/admin/login.php")"
+    if printf '%s' "$rl_resp" | grep -qF "Muitas tentativas"; then
+        rl_bloqueado=1
+        break
+    fi
+done
+rm -f "$RL_JAR"
+if [ "$rl_bloqueado" -eq 1 ]; then
+    echo "PASS  Login é bloqueado depois de tentativas erradas repetidas"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  Login deveria ter sido bloqueado depois de 6 tentativas erradas"
+    FAIL=$((FAIL+1))
 fi
 
 echo

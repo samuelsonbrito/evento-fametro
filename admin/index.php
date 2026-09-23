@@ -33,6 +33,9 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="text-muted">Visão geral e controle da Jornada Acadêmica FAMETRO</div>
       </div>
       <div class="col-auto ms-auto d-flex gap-2">
+        <a href="/admin/estatisticas.php" class="btn btn-outline-primary px-3 rounded-3 fw-bold">
+          <i class="ti ti-chart-bar me-1 fs-4"></i> Estatísticas
+        </a>
         <a href="/admin/inscritos.php" class="btn btn-outline-primary px-3 rounded-3 fw-bold">
           <i class="ti ti-users me-1 fs-4"></i> Todos os Inscritos
         </a>

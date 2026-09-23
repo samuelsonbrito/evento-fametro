@@ -208,6 +208,8 @@ echo "-- Área administrativa (sem login) --"
 check_body_contains "Login ADM carrega"                  "Painel ADM" "$BASE_URL/admin/login.php"
 check_status        "Painel sem sessão redireciona"      302 "$BASE_URL/admin/index.php"
 check_status        "Inscritos sem sessão redireciona"   302 "$BASE_URL/admin/inscritos.php"
+check_status        "Estatísticas sem sessão redireciona" 302 "$BASE_URL/admin/estatisticas.php"
+check_status        "Relatos sem sessão redireciona"     302 "$BASE_URL/admin/relatos-erro.php"
 check_status        "Confirmar presença (rota antiga) sem sessão redireciona" 302 "$BASE_URL/admin/confirmar-presenca.php?code=QR-SEEDPENDENTE01"
 
 echo

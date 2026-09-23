@@ -48,7 +48,7 @@ $qrUrl = "https://quickchart.io/qr?text=" . urlencode($codigoQR) . "&size=300";
 
           <h2 class="text-fametro-blue my-2 fw-bold"><?= htmlspecialchars($dados['titulo']) ?></h2>
           <p class="text-muted mb-3">
-            <i class="ti ti-user me-1"></i> Palestrante: <strong><?= htmlspecialchars($dados['palestrante']) ?></strong><br>
+            <i class="ti ti-user me-1"></i> Palestrante: <strong class="text-uppercase"><?= htmlspecialchars($dados['palestrante']) ?></strong><br>
             <i class="ti ti-clock me-1"></i> Horário: <?= date('H:i', strtotime($dados['horario_inicio'])) ?> às <?= date('H:i', strtotime($dados['horario_fim'])) ?>
           </p>
 

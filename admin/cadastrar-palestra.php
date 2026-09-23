@@ -48,7 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mensagem = "Palestra cadastrada com sucesso!";
             $tipoMensagem = "success";
         } catch (PDOException $e) {
-            $mensagem = "Erro ao salvar no banco: " . $e->getMessage();
+            error_log('Erro ao salvar palestra: ' . $e->getMessage());
+            $mensagem = "Erro ao salvar a palestra. Tente novamente em instantes.";
             $tipoMensagem = "danger";
         }
     } else {

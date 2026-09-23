@@ -71,10 +71,15 @@ corrigidos estão marcados abaixo, o resto é backlog.
    `$_SESSION['admin_logged']` não estiver definido, e `admin/confirmar-presenca.php`
    ganhou a chamada `checarAutenticacaoAdmin()` que faltava.
 
-3. **Mensagens de exceção do banco expostas ao usuário final.**
-   `cadastro.php:58`, `admin/login.php:29`, `admin/cadastrar-palestra.php:52` — todos
-   fazem `"Erro ao processar: " . $e->getMessage()` e imprimem isso na tela. Vaza
-   estrutura de tabela, nomes de coluna, às vezes até fragmento da query.
+3. **[CORRIGIDO em 2026-09-23] Mensagens de exceção do banco expostas ao usuário
+   final.** `cadastro.php`, `admin/cadastrar-palestra.php`, `api/cadastrar_aluno.php`,
+   `api/validar_presenca.php` e `config/database.php` (erro de conexão) faziam
+   `"Erro ao processar: " . $e->getMessage()` direto na tela — vazava estrutura de
+   tabela, nomes de coluna, às vezes fragmento da query. Corrigido: mensagem genérica
+   pro usuário em todos, com `error_log($e->getMessage())` registrando o erro real
+   só no servidor. Confirmado no harness disparando um erro de verdade (duplicidade
+   de `uk_aluno_palestra`) — tela mostra mensagem genérica, log do container mostra o
+   `SQLSTATE` completo.
 
 ## Alto
 
@@ -186,9 +191,17 @@ corrigidos estão marcados abaixo, o resto é backlog.
 
 ## Baixo / cosmético
 
-12. `display_errors`/`display_startup_errors` ligados em `config/database.php`, com o
-    comentário "durante os testes" — mas é o arquivo usado em produção também.
-13. Não há `.gitignore` nem repositório git inicializado — nenhum histórico de mudanças.
+12. **[CORRIGIDO em 2026-09-23]** `display_errors`/`display_startup_errors` ligados
+    incondicionalmente em `config/database.php` — mesmo arquivo usado em produção,
+    então qualquer erro/warning não tratado mostrava caminho de arquivo, linha e
+    stack trace pra qualquer visitante do site real. Corrigido: agora só liga se
+    `APP_DEBUG=true` no `.env` (ausente por padrão — produção nunca define isso). O
+    harness Docker continua mostrando erro normalmente pra desenvolvimento, porque
+    usa `harness/config.local.php`, um arquivo totalmente separado que nunca passa
+    por essa checagem.
+13. **[CORRIGIDO/DESATUALIZADO]** Este item dizia "não há `.gitignore` nem
+    repositório git inicializado" — hoje ambos existem e estão em uso normal desde
+    2026-09-22 (ver `harness/GIT_WORKFLOW.md`). Mantido só por histórico.
 14. **[CORRIGIDO em 2026-09-22]** Não havia `README.md` na raiz do projeto explicando
     como rodar/implantar. Adicionado `README.md` cobrindo funcionalidades, stack,
     modelo de dados, fluxo da aplicação, como rodar o harness local, configuração via
@@ -231,6 +244,15 @@ corrigidos estão marcados abaixo, o resto é backlog.
     real dos dados (import manual? cadastro pelo formulário com charset errado?) antes
     de decidir a correção (reinserir os dados certos vs. escrever um script de
     conversão UTF-8→Latin1→UTF-8 nos valores já salvos).
+
+19. **`admin/confirmar-presenca.php` muda estado via GET (`?code=`), CSRF-ável.**
+    Identificado durante o plano de correção do item 5 (CSRF nos formulários POST).
+    Como essa rota confirma presença só com um `GET`, um `<img src="...">` ou link
+    externo já dispara a ação com a sessão de um admin logado, sem precisar de
+    formulário nenhum — token CSRF em campo de formulário não resolve isso (o
+    ataque nem passa por um form). Corrigir direito significa trocar de GET pra
+    POST, o que muda como essa rota é usada hoje (link direto). Não resolvido ainda
+    — ver plano de correção dos itens de risco Alto.
 
 ## Incidentes
 

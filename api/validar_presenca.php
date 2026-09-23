@@ -90,8 +90,9 @@ try {
     ]);
 
 } catch (Exception $e) {
+    error_log('Erro ao validar presença: ' . $e->getMessage());
     echo json_encode([
-        'sucesso' => false, 
-        'mensagem' => 'Erro ao validar no banco de dados: ' . $e->getMessage()
+        'sucesso' => false,
+        'mensagem' => 'Erro ao validar. Tente novamente em instantes.'
     ]);
 }

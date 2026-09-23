@@ -48,7 +48,8 @@ try {
     exit;
 
 } catch (PDOException $e) {
-    $_SESSION['erro'] = "Erro ao processar inscrição: " . $e->getMessage();
+    error_log('Erro ao processar inscrição (api/cadastrar_aluno.php): ' . $e->getMessage());
+    $_SESSION['erro'] = "Erro ao processar sua inscrição. Tente novamente em instantes.";
     header("Location: /cadastro.php?palestra_id={$palestra_id}");
     exit;
 }

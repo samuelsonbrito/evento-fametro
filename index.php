@@ -154,7 +154,7 @@ require_once __DIR__ . '/includes/header.php';
                       <?= date('H:i', strtotime($palestra['horario_inicio'])) ?> - <?= date('H:i', strtotime($palestra['horario_fim'])) ?>
                     </span>
                   </div>
-                  <div class="fw-bold text-dark fs-5">
+                  <div class="fw-bold text-dark fs-5 text-uppercase">
                     <?= htmlspecialchars($palestra['palestrante']) ?>
                   </div>
                   <small class="text-muted d-block">Palestrante Convidado</small>

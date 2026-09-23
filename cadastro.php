@@ -80,7 +80,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="card-body p-4">
           <span class="badge bg-danger text-uppercase px-3 py-1 rounded-pill mb-2 fw-bold" style="background-color: #e30613 !important;">Inscrição de Participante</span>
           <h2 class="fw-bold mb-1 fs-3"><?= htmlspecialchars($palestra['titulo']) ?></h2>
-          <p class="mb-2 text-white-50"><i class="ti ti-user me-1"></i> Palestrante: <?= htmlspecialchars($palestra['palestrante']) ?></p>
+          <p class="mb-2 text-white-50"><i class="ti ti-user me-1"></i> Palestrante: <span class="text-uppercase"><?= htmlspecialchars($palestra['palestrante']) ?></span></p>
           <div class="d-flex align-items-center gap-3 fs-6">
             <span class="badge bg-white text-dark px-2 py-1 rounded-2">
               <i class="ti ti-clock me-1 text-primary"></i> 

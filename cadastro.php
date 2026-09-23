@@ -28,7 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tipo_participante= sanitize($_POST['tipo_participante'] ?? 'aluno');
     $matricula        = ($tipo_participante === 'aluno') ? sanitize($_POST['matricula'] ?? '') : null;
 
-    if (!empty($nome_aluno) && !empty($email)) {
+    if (!validarTokenCSRF($_POST['csrf_token'] ?? '')) {
+        $mensagem = "Sessão expirada. Atualize a página e tente novamente.";
+        $tipoMensagem = "warning";
+    } elseif (!empty($nome_aluno) && !empty($email)) {
         try {
             // Verificar se já existe inscrição para este e-mail nesta palestra
             $stmtCheck = $pdo->prepare("SELECT codigo_qrcode FROM inscricoes WHERE palestra_id = ? AND email = ?");
@@ -98,7 +101,8 @@ require_once __DIR__ . '/includes/header.php';
           <?php endif; ?>
 
           <form action="" method="POST">
-            
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(gerarTokenCSRF()) ?>">
+
             <div class="mb-3">
               <label class="form-label required fw-bold">Tipo de Participante</label>
               <select name="tipo_participante" id="tipoParticipante" class="form-select rounded-3 py-2" onchange="alternarCampoMatricula()">

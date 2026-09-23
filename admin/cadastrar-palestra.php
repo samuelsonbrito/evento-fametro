@@ -7,7 +7,10 @@ checarAutenticacaoAdmin();
 $mensagem = '';
 $tipoMensagem = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validarTokenCSRF($_POST['csrf_token'] ?? '')) {
+    $mensagem = "Sessão expirada. Atualize a página e tente novamente.";
+    $tipoMensagem = "warning";
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $titulo         = sanitize($_POST['titulo'] ?? '');
     $palestrante    = sanitize($_POST['palestrante'] ?? '');
     $descricao      = sanitize($_POST['descricao'] ?? '');
@@ -83,7 +86,8 @@ require_once __DIR__ . '/../includes/header.php';
           <?php endif; ?>
 
           <form action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST" enctype="multipart/form-data">
-            
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(gerarTokenCSRF()) ?>">
+
             <div class="mb-3">
               <label class="form-label required fw-bold">Título da Palestra</label>
               <input type="text" name="titulo" class="form-control" placeholder="Ex: Aplicações Práticas de IA no Mercado" required>

@@ -82,21 +82,53 @@ check_body_contains "Ticket (seed) exibe QR"             "Comprovante de Inscri�
 
 echo
 echo "-- Mensagens de erro não vazam detalhe do banco --"
-resp_dup1="$(curl -s -X POST "$BASE_URL/cadastro.php?palestra_id=5" \
+DUP_JAR="$(mktemp)"
+dup_token_1="$(curl -s -c "$DUP_JAR" "$BASE_URL/cadastro.php?palestra_id=5" | grep -oP 'name="csrf_token" value="\K[^"]*')"
+resp_dup1="$(curl -s -b "$DUP_JAR" -c "$DUP_JAR" -X POST "$BASE_URL/cadastro.php?palestra_id=5" \
+    --data-urlencode "csrf_token=$dup_token_1" \
     --data-urlencode "nome_aluno=Smoke Duplicidade" \
     --data-urlencode "email=smoke.dup1@exemplo.com" \
     --data-urlencode "tipo_participante=aluno" \
     --data-urlencode "matricula=SMOKE-DUP-001")"
-resp_dup2="$(curl -s -X POST "$BASE_URL/cadastro.php?palestra_id=5" \
+dup_token_2="$(curl -s -b "$DUP_JAR" -c "$DUP_JAR" "$BASE_URL/cadastro.php?palestra_id=5" | grep -oP 'name="csrf_token" value="\K[^"]*')"
+resp_dup2="$(curl -s -b "$DUP_JAR" -c "$DUP_JAR" -X POST "$BASE_URL/cadastro.php?palestra_id=5" \
+    --data-urlencode "csrf_token=$dup_token_2" \
     --data-urlencode "nome_aluno=Smoke Duplicidade 2" \
     --data-urlencode "email=smoke.dup2@exemplo.com" \
     --data-urlencode "tipo_participante=aluno" \
     --data-urlencode "matricula=SMOKE-DUP-001")"
+rm -f "$DUP_JAR"
 if printf '%s' "$resp_dup2" | grep -qF "Tente novamente em instantes" && ! printf '%s' "$resp_dup2" | grep -qi "SQLSTATE"; then
     echo "PASS  Erro de duplicidade mostra mensagem genérica (sem SQLSTATE na tela)"
     PASS=$((PASS+1))
 else
     echo "FAIL  Mensagem de erro deveria ser genérica, sem vazar SQLSTATE — veio: $resp_dup2"
+    FAIL=$((FAIL+1))
+fi
+
+echo
+echo "-- CSRF --"
+resp_csrf_sem="$(curl -s -X POST "$BASE_URL/cadastro.php?palestra_id=6" \
+    --data-urlencode "nome_aluno=Smoke CSRF" \
+    --data-urlencode "email=smoke.csrf@exemplo.com" \
+    --data-urlencode "tipo_participante=externo")"
+if printf '%s' "$resp_csrf_sem" | grep -qF "Sessão expirada"; then
+    echo "PASS  cadastro.php rejeita POST sem csrf_token"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  cadastro.php deveria rejeitar POST sem csrf_token — veio: $resp_csrf_sem"
+    FAIL=$((FAIL+1))
+fi
+
+resp_csrf_errado="$(curl -s -X POST "$BASE_URL/admin/login.php" \
+    --data-urlencode "csrf_token=token-forjado-nao-existe" \
+    --data-urlencode "usuario=admin" \
+    --data-urlencode "senha=qualquer-coisa")"
+if printf '%s' "$resp_csrf_errado" | grep -qF "Sessão expirada"; then
+    echo "PASS  admin/login.php rejeita POST com csrf_token errado"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  admin/login.php deveria rejeitar csrf_token errado — veio: $resp_csrf_errado"
     FAIL=$((FAIL+1))
 fi
 
@@ -149,7 +181,9 @@ echo
 echo "-- API de validação de presença autenticada (opcional) --"
 if [ -n "${HARNESS_ADMIN_USER:-}" ] && [ -n "${HARNESS_ADMIN_PASS:-}" ]; then
     COOKIE_JAR="$(mktemp)"
-    curl -s -c "$COOKIE_JAR" -o /dev/null \
+    login_token="$(curl -s -c "$COOKIE_JAR" "$BASE_URL/admin/login.php" | grep -oP 'name="csrf_token" value="\K[^"]*')"
+    curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" -o /dev/null \
+        --data-urlencode "csrf_token=$login_token" \
         --data-urlencode "usuario=$HARNESS_ADMIN_USER" \
         --data-urlencode "senha=$HARNESS_ADMIN_PASS" \
         "$BASE_URL/admin/login.php"

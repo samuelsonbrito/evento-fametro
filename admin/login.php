@@ -8,7 +8,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usuario = sanitize($_POST['usuario'] ?? '');
     $senha = $_POST['senha'] ?? '';
 
-    if (!empty($usuario) && !empty($senha)) {
+    if (!validarTokenCSRF($_POST['csrf_token'] ?? '')) {
+        $erro = 'Sessão expirada. Atualize a página e tente novamente.';
+    } elseif (!empty($usuario) && !empty($senha)) {
         try {
             // Procura o utilizador na base de dados
             $stmt = $pdo->prepare("SELECT * FROM administradores WHERE usuario = ?");
@@ -69,6 +71,8 @@ require_once __DIR__ . '/../includes/header.php';
           <?php endif; ?>
 
           <form action="/admin/login.php" method="POST" autocomplete="off">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(gerarTokenCSRF()) ?>">
+
             <div class="mb-3">
               <label class="form-label required">Usuário</label>
               <input type="text" name="usuario" class="form-control" placeholder="admin" required autofocus>

@@ -102,3 +102,17 @@ function checarAutenticacaoAdmin() {
         exit;
     }
 }
+
+// Token CSRF por sessão — gerado uma vez e reaproveitado enquanto a sessão durar
+// (não precisa trocar a cada requisição pra ser eficaz).
+function gerarTokenCSRF() {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function validarTokenCSRF($token) {
+    return !empty($_SESSION['csrf_token']) && !empty($token)
+        && hash_equals($_SESSION['csrf_token'], $token);
+}

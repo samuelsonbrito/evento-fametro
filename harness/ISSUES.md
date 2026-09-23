@@ -92,13 +92,18 @@ corrigidos estão marcados abaixo, o resto é backlog.
    introduzir um bug futuro esquecendo de atualizar as duas colunas em um novo fluxo.
    Vale unificar em uma coluna só.
 
-5. **Sem proteção CSRF em nenhum formulário.**
+5. **[CORRIGIDO em 2026-09-23] Sem proteção CSRF em nenhum formulário.**
    `cadastro.php`, `admin/login.php`, `admin/cadastrar-palestra.php` — formulários POST
-   sem token. Um site malicioso poderia submeter esses formulários em nome de uma
-   sessão de admin já autenticada. **Parcialmente mitigado em 2026-09-23**: o cookie
-   de sessão agora sai com `SameSite=Lax` (ver item 6b), o que já bloqueia a maioria
-   dos ataques CSRF cross-site na prática — mas token de verdade nos formulários
-   ainda está no plano de correção, é a defesa completa.
+   sem token, um site malicioso poderia submeter em nome de uma sessão de admin já
+   autenticada. Corrigido: `gerarTokenCSRF()`/`validarTokenCSRF()` em
+   `includes/functions.php` (token de 32 bytes aleatórios por sessão, comparado com
+   `hash_equals()`); os 3 formulários ganharam um campo oculto `csrf_token`, validado
+   no início do bloco POST de cada um — rejeitando com mensagem clara antes de tocar
+   em qualquer dado (inclusive antes de processar o upload de foto, em
+   `admin/cadastrar-palestra.php`). Testado no harness: os 3 formulários funcionam
+   normalmente com token certo, e são rejeitados sem token ou com token forjado.
+   Combinado com o `SameSite=Lax` do item 6b, cobre tanto CSRF cross-site quanto
+   same-site-mas-forjado.
 
 6. **Sem rate limiting.**
    `admin/login.php` (força bruta de senha) e `api/validar_presenca.php`, agora que

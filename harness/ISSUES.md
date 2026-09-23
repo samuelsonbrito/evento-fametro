@@ -368,6 +368,42 @@ corrigidos estão marcados abaixo, o resto é backlog.
     original do admin (reverse tabnabbing). Corrigido junto com o item 20 —
     `rel="noopener noreferrer"` adicionado no mesmo `<a>`.
 
+## Decisões de design
+
+### `consultar-inscricao.php` (2026-09-23) — busca por e-mail sem verificação forte
+
+Tela pública pra quem perdeu o link do `ticket.php`: informa e-mail (e,
+opcionalmente, matrícula) e recebe a lista das próprias inscrições, com link
+pra ver o QR Code de cada uma. Decisão consciente de aceitar um trade-off de
+privacidade em troca de conveniência, em vez de bloquear a funcionalidade:
+
+- **Risco aceito:** buscar só por e-mail permite que qualquer pessoa que
+  saiba/adivinhe o e-mail de outra veja as inscrições dela e chegue no QR
+  Code — e-mails institucionais costumam seguir padrão previsível. Impacto
+  prático: alguém pode ver em quais palestras a pessoa está inscrita e, na
+  teoria, mostrar o QR dela no credenciamento (mesma classe de risco que já
+  existe hoje por quem intercepta o link do e-mail de confirmação — não é um
+  problema novo introduzido por esta tela, só um segundo caminho até o mesmo
+  dado).
+- **Mitigação 1 — rate limiting:** reaproveita a mesma infraestrutura do
+  login e do botão "Reportar problema" (`estaLimitadoPorTentativas()`,
+  tabela `tentativas_login`), identificador `consulta:<IP>`, 5 buscas por IP
+  a cada 15 minutos. Não impede um ataque direcionado a uma pessoa só, mas
+  torna inviável varrer a base inteira testando e-mails em sequência.
+- **Mitigação 2 — matrícula opcional como filtro extra:** quando informada,
+  a matrícula também precisa bater — quem não souber a matrícula de outra
+  pessoa não consegue refinar a busca. Público externo (sem matrícula) segue
+  buscando só por e-mail, já que é o único dado que tem.
+- **Mensagem genérica sempre:** e-mail inexistente e e-mail existente com
+  matrícula errada retornam exatamente a mesma mensagem ("Nenhuma inscrição
+  encontrada com esses dados."), pra não virar um jeito de confirmar se um
+  e-mail está cadastrado no evento.
+- **Não resolvido, aceito por ora:** não há verificação de posse do e-mail
+  (tipo link de confirmação por e-mail) — o projeto não tem infraestrutura de
+  envio de e-mail (sem SMTP configurado, ver `README.md`). Se isso mudar no
+  futuro, vale reavaliar endurecer esta tela com um código enviado por
+  e-mail em vez de busca direta.
+
 ## Incidentes
 
 ### 2026-09-22 — perda de dados de produção por rodar `schema.sql`/`seed.sql` no banco real

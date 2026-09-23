@@ -50,6 +50,9 @@ $pageCanonical   = $pageCanonical ?? SITE_URL . ($_SERVER['REQUEST_URI'] ?? '/in
             <span class="fw-bold text-fametro-blue d-none d-sm-inline">Imersão FAMETRO</span>
           </a>
           <div class="navbar-nav ms-auto">
+            <a href="/consultar-inscricao.php" class="btn btn-outline-secondary btn-sm me-2">
+              <i class="ti ti-qrcode me-1"></i> Consultar Inscrição
+            </a>
             <?php if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true): ?>
               <a href="/admin/index.php" class="btn btn-fametro-red btn-sm me-2">
                 <i class="ti ti-dashboard me-1"></i> Painel ADM

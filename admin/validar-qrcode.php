@@ -150,10 +150,8 @@ function iniciarLeitorCamara() {
 
     Html5Qrcode.getCameras().then(devices => {
         if (devices && devices.length) {
-            const cameraId = devices[0].id;
-            
             html5QrCode.start(
-                cameraId, 
+                { facingMode: "environment" }, // câmera traseira — devices[0] costuma ser a frontal em celulares
                 {
                     fps: 20, // Leitura ultra rápida
                     qrbox: { width: 250, height: 250 }

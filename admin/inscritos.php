@@ -26,6 +26,9 @@ $stmtInscritos = $pdo->prepare($sql);
 $stmtInscritos->execute($params);
 $inscritos = $stmtInscritos->fetchAll();
 
+$pageTitle = 'Inscritos | Jornada Acadêmica Imersão FAMETRO';
+$pageNoIndex = true; // Lista dados pessoais dos inscritos — nunca deve ir pro índice do Google.
+
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

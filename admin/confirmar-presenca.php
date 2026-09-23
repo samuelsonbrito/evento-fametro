@@ -37,6 +37,9 @@ $mensagem = "Código QR Code inválido ou não encontrado no sistema.";
 $mensagem = "Nenhum código fornecido para validação.";
 }
 
+$pageTitle = 'Confirmação de Presença | Jornada Acadêmica Imersão FAMETRO';
+$pageNoIndex = true;
+
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

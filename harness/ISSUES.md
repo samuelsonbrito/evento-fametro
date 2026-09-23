@@ -105,6 +105,25 @@ corrigidos estão marcados abaixo, o resto é backlog.
    qualquer inscrição, sem precisar do QR Code real. Corrigido junto com o item 2b —
    a query só casa mais `codigo_qrcode` (exato ou case-insensitive), nunca `id`.
 
+7d. **Duas cópias do site respondendo simultaneamente em produção
+   (`https://eventofametro.com.br/` e `https://eventofametro.com.br/evento-fametro/`),
+   com código diferente em cada uma.** Descoberto durante o trabalho de SEO (2026-09-22)
+   ao testar `curl` contra o domínio real: `/index.php` (raiz) responde com uma versão
+   mais antiga do código (sem a correção da linha em branco antes de `<?php`, título
+   sem "IA"); `/evento-fametro/index.php` responde com uma versão mais nova, batendo
+   com o estado atual do repositório. Como **todo link interno do app é absoluto e
+   começa com `/evento-fametro/...`** (menu, redirects de formulário, etc.), só a cópia
+   em `/evento-fametro/` navega corretamente dentro de si mesma — a da raiz manda o
+   usuário pra fora dela mesma ao clicar em qualquer link. Risco prático: se as duas
+   cópias apontarem pro mesmo banco, tudo bem pros dados (mesma tabela) mas o usuário
+   pode ficar preso numa versão desatualizada do código; se apontarem pra bancos
+   diferentes, inscrições feitas numa cópia não aparecem na outra. Também é duplicidade
+   de conteúdo pro Google (ver `robots.txt`/`sitemap.php`, que hoje cobrem os dois
+   caminhos defensivamente até isso ser resolvido). **Não investigado a fundo** — não
+   se sabe ainda qual cópia é a "errada" nem por que as duas existem (deploy manual
+   duplicado? configuração de virtual host no Umbler?). Próximo passo: entrar no
+   servidor (acesso SSH já configurado) e comparar as duas pastas físicas.
+
 ## Médio-Alto
 
 7b. **Checagem de duplicidade não bate com a constraint real do banco.**
@@ -182,6 +201,18 @@ corrigidos estão marcados abaixo, o resto é backlog.
     o que mascararia o problema), mas foi corrigido em todos os 12 arquivos por
     segurança e para os redirects funcionarem de forma confiável em qualquer
     ambiente.
+
+18. **Mojibake (encoding duplo) no texto de `titulo`/`descricao` das palestras.**
+    Confirmado durante o trabalho de SEO (2026-09-22): títulos com acento aparecem
+    como `"IA AgÃªntica"` em vez de `"IA Agêntica"` — no card da home (`index.php`,
+    código não relacionado ao SEO) e em todo lugar que exibe esses campos. Os dados
+    parecem já estar salvos assim no banco (não é um bug de exibição pontual). Causa
+    provável: o texto foi inserido em algum momento com um mismatch de charset entre
+    o cliente (formulário/import) e a conexão MySQL — `config/database.php` já usa
+    `charset=utf8mb4` na conexão PDO, então não é isso. Precisa investigar a origem
+    real dos dados (import manual? cadastro pelo formulário com charset errado?) antes
+    de decidir a correção (reinserir os dados certos vs. escrever um script de
+    conversão UTF-8→Latin1→UTF-8 nos valores já salvos).
 
 ## Incidentes
 

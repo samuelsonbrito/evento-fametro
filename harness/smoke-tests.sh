@@ -66,6 +66,18 @@ check_body_contains "Cadastro abre para palestra válida" "Inscrição de Partic
 check_status        "Cadastro sem palestra_id redireciona" 302 "$BASE_URL/cadastro.php"
 check_body_contains "Comprovante (seed) exibe QR"        "Comprovante de Inscrição" "$BASE_URL/comprovante.php?codigo=QR-SEEDCONFIRMADO01"
 check_body_contains "Ticket (seed) exibe QR"             "Comprovante de Inscrição" "$BASE_URL/ticket.php?codigo=QR-SEEDCONFIRMADO01"
+
+echo
+echo "-- SEO --"
+check_body_contains "Home tem meta description"          'name="description"' "$BASE_URL/index.php"
+check_body_contains "Home é indexável"                    'name="robots" content="index, follow"' "$BASE_URL/index.php"
+check_body_contains "Home tem dados estruturados (Event)" 'application/ld+json' "$BASE_URL/index.php"
+check_body_contains "Comprovante é noindex (dados pessoais)" 'name="robots" content="noindex, nofollow"' "$BASE_URL/comprovante.php?codigo=QR-SEEDCONFIRMADO01"
+check_body_contains "Admin login é noindex"               'name="robots" content="noindex, nofollow"' "$BASE_URL/admin/login.php"
+check_status        "robots.txt responde 200"             200 "$BASE_URL/robots.txt"
+check_body_contains "robots.txt bloqueia /admin/"         'Disallow: /evento-fametro/admin/' "$BASE_URL/robots.txt"
+check_status        "sitemap.php responde 200"             200 "$BASE_URL/sitemap.php"
+check_body_contains "sitemap.php é XML válido"             '<urlset' "$BASE_URL/sitemap.php"
 check_status        "Comprovante por ID sequencial não funciona mais (ex-IDOR)" 302 "$BASE_URL/comprovante.php?id=1"
 check_status        "Comprovante inexistente redireciona" 302 "$BASE_URL/comprovante.php?codigo=QR-CODIGO-INEXISTENTE"
 

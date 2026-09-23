@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
-require_once __DIR__ . '/includes/header.php';
 
 // Buscar todas as palestras cadastradas ordenadas pelo horário
 try {
@@ -10,6 +9,11 @@ try {
 } catch (PDOException $e) {
     $palestras = [];
 }
+
+$pageTitle = 'Jornada Acadêmica Imersão FAMETRO — 2 de Outubro | Inscrições Abertas';
+$pageDescription = 'Inscreva-se gratuitamente na Jornada Acadêmica Imersão FAMETRO: palestras sobre Inteligência Artificial, até 15h de horas complementares e credenciamento por QR Code. Vagas limitadas.';
+
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <style>
@@ -182,5 +186,50 @@ try {
     </div>
   <?php endif; ?>
 </div>
+
+<?php
+// Dados estruturados (Schema.org/Event) — um bloco por palestra, pra habilitar rich
+// results de evento no Google. titulo/palestrante/descricao já vêm com
+// htmlspecialchars() aplicado na inserção (ver sanitize() em includes/functions.php),
+// então não há risco de fechar a tag <script> com conteúdo vindo do banco.
+foreach ($palestras as $palestraLd):
+    $imagemLd = !empty($palestraLd['foto']) && file_exists(__DIR__ . '/uploads/palestrantes/' . $palestraLd['foto'])
+        ? SITE_URL . '/evento-fametro/uploads/palestrantes/' . rawurlencode($palestraLd['foto'])
+        : $pageImage;
+
+    $eventoLd = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Event',
+        'name' => $palestraLd['titulo'],
+        'description' => $palestraLd['descricao'],
+        'startDate' => EVENTO_DATA . 'T' . $palestraLd['horario_inicio'] . '-03:00',
+        'endDate' => EVENTO_DATA . 'T' . $palestraLd['horario_fim'] . '-03:00',
+        'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
+        'eventStatus' => 'https://schema.org/EventScheduled',
+        'image' => [$imagemLd],
+        'location' => [
+            '@type' => 'Place',
+            'name' => 'Centro Universitário FAMETRO',
+        ],
+        'performer' => [
+            '@type' => 'Person',
+            'name' => $palestraLd['palestrante'],
+        ],
+        'organizer' => [
+            '@type' => 'Organization',
+            'name' => 'Centro Universitário FAMETRO',
+            'url' => SITE_URL,
+        ],
+        'offers' => [
+            '@type' => 'Offer',
+            'url' => SITE_URL . '/evento-fametro/cadastro.php?palestra_id=' . $palestraLd['id'],
+            'price' => '0',
+            'priceCurrency' => 'BRL',
+            'availability' => 'https://schema.org/InStock',
+        ],
+    ];
+?>
+<script type="application/ld+json"><?= json_encode($eventoLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+<?php endforeach; ?>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

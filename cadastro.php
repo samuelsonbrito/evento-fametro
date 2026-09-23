@@ -61,13 +61,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$pageTitle = 'Inscrição — ' . $palestra['titulo'] . ' | Jornada Acadêmica Imersão FAMETRO';
+$pageDescription = 'Inscreva-se na palestra "' . $palestra['titulo'] . '", com ' . $palestra['palestrante'] . ', na Jornada Acadêmica Imersão FAMETRO (2 de outubro).';
+
 require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="container-xl py-4">
   <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
-      
+
       <!-- Detalhes da Palestra -->
       <div class="card shadow-sm border-0 rounded-4 mb-4 overflow-hidden" style="background: linear-gradient(135deg, #003a7a 0%, #001f42 100%); color: #ffffff;">
         <div class="card-body p-4">

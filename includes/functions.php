@@ -3,6 +3,17 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// URL canônica de produção — usada nas tags de SEO (canonical, Open Graph, sitemap).
+// Fixa de propósito (não deriva de $_SERVER['HTTP_HOST']): evita que acesso por IP,
+// domínio antigo ou ambiente de teste vaze pra dentro das tags de SEO.
+define('SITE_URL', 'https://eventofametro.com.br');
+
+// Data do evento, usada nos dados estruturados Schema.org/Event em index.php. Não há
+// coluna de data do evento no banco — o resto do app já trata "2 de Outubro" como
+// texto fixo (ver includes/footer.php, index.php). Atualizar aqui se o evento se
+// repetir em outro ano.
+define('EVENTO_DATA', '2026-10-02');
+
 function sanitize($data) {
     return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
 }

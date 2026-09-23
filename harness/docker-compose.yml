@@ -31,12 +31,13 @@ services:
       DB_USER: fametro
       DB_PASS: fametro_local_pw
     volumes:
-      # Todo o projeto entra como /evento-fametro, porque o código usa caminhos
-      # absolutos tipo /evento-fametro/index.php em headers e links.
-      - ../:/var/www/html/evento-fametro
+      # O projeto entra direto na raiz do docroot do Apache — o app usa caminhos
+      # absolutos tipo /index.php (sem prefixo de subpasta) em headers e links, pra
+      # bater com a produção real (domínio dedicado, servindo da raiz).
+      - ../:/var/www/html
       # Só a config aponta pro banco local — o config/database.php real do repositório
       # nunca é tocado.
-      - ./config.local.php:/var/www/html/evento-fametro/config/database.php:ro
+      - ./config.local.php:/var/www/html/config/database.php:ro
     ports:
       - "8080:80"
     networks:

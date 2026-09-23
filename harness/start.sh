@@ -9,7 +9,7 @@ docker compose up -d --build
 
 echo
 echo "Harness no ar:"
-echo "  Site:       http://localhost:8080/evento-fametro/index.php"
+echo "  Site:       http://localhost:8080/index.php"
 echo "  phpMyAdmin: http://localhost:8081  (usuário: fametro / senha: fametro_local_pw)"
 echo "  MySQL:      localhost:33061"
 echo

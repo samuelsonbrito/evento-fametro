@@ -105,24 +105,42 @@ corrigidos estão marcados abaixo, o resto é backlog.
    qualquer inscrição, sem precisar do QR Code real. Corrigido junto com o item 2b —
    a query só casa mais `codigo_qrcode` (exato ou case-insensitive), nunca `id`.
 
-7d. **Duas cópias do site respondendo simultaneamente em produção
-   (`https://eventofametro.com.br/` e `https://eventofametro.com.br/evento-fametro/`),
-   com código diferente em cada uma.** Descoberto durante o trabalho de SEO (2026-09-22)
-   ao testar `curl` contra o domínio real: `/index.php` (raiz) responde com uma versão
-   mais antiga do código (sem a correção da linha em branco antes de `<?php`, título
-   sem "IA"); `/evento-fametro/index.php` responde com uma versão mais nova, batendo
-   com o estado atual do repositório. Como **todo link interno do app é absoluto e
-   começa com `/evento-fametro/...`** (menu, redirects de formulário, etc.), só a cópia
-   em `/evento-fametro/` navega corretamente dentro de si mesma — a da raiz manda o
-   usuário pra fora dela mesma ao clicar em qualquer link. Risco prático: se as duas
-   cópias apontarem pro mesmo banco, tudo bem pros dados (mesma tabela) mas o usuário
-   pode ficar preso numa versão desatualizada do código; se apontarem pra bancos
-   diferentes, inscrições feitas numa cópia não aparecem na outra. Também é duplicidade
-   de conteúdo pro Google (ver `robots.txt`/`sitemap.php`, que hoje cobrem os dois
-   caminhos defensivamente até isso ser resolvido). **Não investigado a fundo** — não
-   se sabe ainda qual cópia é a "errada" nem por que as duas existem (deploy manual
-   duplicado? configuração de virtual host no Umbler?). Próximo passo: entrar no
-   servidor (acesso SSH já configurado) e comparar as duas pastas físicas.
+7d. **[CORRIGIDO em 2026-09-23] Duas cópias do site respondendo simultaneamente em
+   produção** (`https://eventofametro.com.br/` e
+   `https://eventofametro.com.br/evento-fametro/`), com código diferente em cada uma.
+   Descoberto durante o trabalho de SEO ao testar `curl` contra o domínio real.
+   Investigado via SSH (servidor Umbler): a pasta `/evento-fametro/` era uma cópia
+   antiga sobrando de um deploy manual anterior — removida pelo usuário diretamente no
+   servidor. A cópia real e única passou a ser a da raiz (`/home/defaultwebsite/public`,
+   servindo `https://eventofametro.com.br/`).
+
+7e. **[CORRIGIDO em 2026-09-23] Consequência do item 7d: todo link interno do app é
+   absoluto com prefixo fixo `/evento-fametro/...`, mas a produção real serve da raiz
+   do domínio.** Depois de resolver a duplicação (7d) e conectar o servidor ao Git (ver
+   abaixo), ficou evidente que **isso quebrava a navegação de verdade**: CSS
+   retornando 404, botão "Inscrever-se" de cada palestra levando a 404, login
+   administrativo inacessível — confirmado ao vivo em `eventofametro.com.br` antes da
+   correção. Causa: o app inteiro (51 ocorrências em 17 arquivos — `header()`,
+   `href`, `src`, `action`, `fetch()`) hardcodava `/evento-fametro/` como prefixo de
+   caminho, assumindo que o app rodava numa subpasta. Corrigido removendo o prefixo de
+   todos os caminhos absolutos, pra bater com o deploy real (raiz do domínio). O
+   harness Docker também foi ajustado (`harness/docker-compose.yml`): o volume do app
+   agora monta direto em `/var/www/html` (raiz do Apache no container) em vez de
+   `/var/www/html/evento-fametro`, pra local e produção terem a mesma estrutura de
+   caminho e esse tipo de bug não passar despercebido de novo pelos smoke tests.
+
+   **Conectando o servidor de produção ao Git**, nesta mesma sessão: o servidor Umbler
+   (`/home/defaultwebsite/public`) tinha os arquivos do projeto mas nenhum histórico de
+   Git. Adotado com `git init` + `git remote add origin` + `git fetch` +
+   `git diff HEAD origin/main` (nunca `checkout -f`/`reset --hard` direto) pra revisar
+   exatamente o que mudaria antes de aplicar — método seguro pra "adotar" uma pasta
+   existente sem arriscar apagar dado de produção (`.env`, fotos de palestrante já
+   enviadas). Um cuidado que vale registrar: o primeiro `git add -A` de captura do
+   estado atual acabou incluindo o `.env` real (sem `.gitignore` na pasta ainda) —
+   corrigido na hora (`git rm --cached .env` + `.gitignore` enviado) antes de qualquer
+   commit ganhar um remote de verdade. Sempre confirmar que segredos não entraram no
+   commit antes de considerar "pronto", mesmo em repositório que nunca vai receber
+   push.
 
 ## Médio-Alto
 

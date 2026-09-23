@@ -62,7 +62,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 <p class="fs-3 my-3"><?= $mensagem ?></p>
 
-<a href="/evento-fametro/index.php" class="btn btn-fametro-blue mt-3">
+<a href="/index.php" class="btn btn-fametro-blue mt-3">
 <i class="ti ti-home me-1"></i> Voltar à Página Inicial
 </a>
 </div>

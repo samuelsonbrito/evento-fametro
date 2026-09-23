@@ -4,5 +4,5 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 $_SESSION = array();
 session_destroy();
-header('Location: /evento-fametro/admin/login.php');
+header('Location: /admin/login.php');
 exit;

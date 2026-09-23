@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/functions.php';
 $codigoQrcode = trim($_GET['codigo'] ?? '');
 
 if ($codigoQrcode === '') {
-    header('Location: /evento-fametro/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -19,7 +19,7 @@ $stmt->execute([$codigoQrcode]);
 $dados = $stmt->fetch();
 
 if (!$dados) {
-    header('Location: /evento-fametro/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -88,7 +88,7 @@ $qrUrl = "https://quickchart.io/qr?text=" . urlencode($codigoQR) . "&size=300";
           </p>
 
           <div class="d-print-none d-flex justify-content-between align-items-center pt-2 border-top">
-            <a href="/evento-fametro/index.php" class="btn btn-secondary rounded-3">
+            <a href="/index.php" class="btn btn-secondary rounded-3">
               <i class="ti ti-home me-1"></i> Início
             </a>
             <div class="d-flex gap-2">

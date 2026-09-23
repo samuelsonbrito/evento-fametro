@@ -8,9 +8,9 @@ if (session_status() === PHP_SESSION_NONE) {
 // abaixo (bons o bastante pra home, mas genéricos demais pra páginas internas).
 $pageTitle       = $pageTitle ?? 'Jornada Acadêmica Imersão FAMETRO — Inscrições Abertas';
 $pageDescription = $pageDescription ?? 'Inscreva-se gratuitamente na Jornada Acadêmica Imersão FAMETRO, dia 2 de outubro. Palestras sobre Inteligência Artificial, até 15h complementares e credenciamento por QR Code.';
-$pageImage       = $pageImage ?? SITE_URL . '/evento-fametro/assets/img/principal.png';
+$pageImage       = $pageImage ?? SITE_URL . '/assets/img/principal.png';
 $pageNoIndex     = $pageNoIndex ?? false;
-$pageCanonical   = $pageCanonical ?? SITE_URL . ($_SERVER['REQUEST_URI'] ?? '/evento-fametro/index.php');
+$pageCanonical   = $pageCanonical ?? SITE_URL . ($_SERVER['REQUEST_URI'] ?? '/index.php');
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -37,28 +37,28 @@ $pageCanonical   = $pageCanonical ?? SITE_URL . ($_SERVER['REQUEST_URI'] ?? '/ev
     <meta name="twitter:description" content="<?= htmlspecialchars($pageDescription) ?>"/>
     <meta name="twitter:image" content="<?= htmlspecialchars($pageImage) ?>"/>
 
-    <link rel="icon" href="/evento-fametro/assets/img/logo-fametro.png" type="image/png"/>
+    <link rel="icon" href="/assets/img/logo-fametro.png" type="image/png"/>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-    <link rel="stylesheet" href="/evento-fametro/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
   </head>
   <body class="bg-light">
     <div class="page">
       <header class="navbar navbar-expand-md navbar-light bg-white d-print-none border-bottom-fametro shadow-sm">
         <div class="container-xl">
-          <a href="/evento-fametro/index.php" class="navbar-brand d-flex align-items-center">
-            <img src="/evento-fametro/assets/img/logo-fametro.png" alt="FAMETRO" style="height: 38px;" class="me-2" onerror="this.style.display='none'">
+          <a href="/index.php" class="navbar-brand d-flex align-items-center">
+            <img src="/assets/img/logo-fametro.png" alt="FAMETRO" style="height: 38px;" class="me-2" onerror="this.style.display='none'">
             <span class="fw-bold text-fametro-blue d-none d-sm-inline">Imersão FAMETRO</span>
           </a>
           <div class="navbar-nav ms-auto">
             <?php if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true): ?>
-              <a href="/evento-fametro/admin/index.php" class="btn btn-fametro-red btn-sm me-2">
+              <a href="/admin/index.php" class="btn btn-fametro-red btn-sm me-2">
                 <i class="ti ti-dashboard me-1"></i> Painel ADM
               </a>
-              <a href="/evento-fametro/admin/logout.php" class="btn btn-outline-secondary btn-sm">Sair</a>
+              <a href="/admin/logout.php" class="btn btn-outline-secondary btn-sm">Sair</a>
             <?php else: ?>
-              <a href="/evento-fametro/admin/login.php" class="btn btn-outline-primary btn-sm">Área Restrita</a>
+              <a href="/admin/login.php" class="btn btn-outline-primary btn-sm">Área Restrita</a>
             <?php endif; ?>
           </div>
         </div>

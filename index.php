@@ -121,7 +121,7 @@ require_once __DIR__ . '/includes/header.php';
           $nomeFoto = $palestra['foto'] ?? $palestra['imagem'] ?? '';
           $caminhoArquivo = __DIR__ . '/uploads/palestrantes/' . $nomeFoto;
           $temFoto = !empty($nomeFoto) && file_exists($caminhoArquivo);
-          $fotoUrl = '/evento-fametro/uploads/palestrantes/' . htmlspecialchars($nomeFoto);
+          $fotoUrl = '/uploads/palestrantes/' . htmlspecialchars($nomeFoto);
         ?>
         <div class="col-md-6 col-lg-4">
           <div class="card card-palestra h-100 shadow-sm border-0 rounded-4 overflow-hidden d-flex flex-column" style="background: #ffffff;">
@@ -173,7 +173,7 @@ require_once __DIR__ . '/includes/header.php';
 
               <!-- Botão de Inscrição -->
               <div class="pt-3 border-top mt-auto">
-                <a href="/evento-fametro/cadastro.php?palestra_id=<?= $palestra['id'] ?>" 
+                <a href="/cadastro.php?palestra_id=<?= $palestra['id'] ?>" 
                    class="btn btn-danger btn-inscrever w-100 rounded-3 py-2 fw-bold text-uppercase shadow-sm d-flex align-items-center justify-content-center gap-2">
                   <i class="ti ti-edit fs-5"></i> Inscrever-se
                 </a>
@@ -194,7 +194,7 @@ require_once __DIR__ . '/includes/header.php';
 // então não há risco de fechar a tag <script> com conteúdo vindo do banco.
 foreach ($palestras as $palestraLd):
     $imagemLd = !empty($palestraLd['foto']) && file_exists(__DIR__ . '/uploads/palestrantes/' . $palestraLd['foto'])
-        ? SITE_URL . '/evento-fametro/uploads/palestrantes/' . rawurlencode($palestraLd['foto'])
+        ? SITE_URL . '/uploads/palestrantes/' . rawurlencode($palestraLd['foto'])
         : $pageImage;
 
     $eventoLd = [
@@ -222,7 +222,7 @@ foreach ($palestras as $palestraLd):
         ],
         'offers' => [
             '@type' => 'Offer',
-            'url' => SITE_URL . '/evento-fametro/cadastro.php?palestra_id=' . $palestraLd['id'],
+            'url' => SITE_URL . '/cadastro.php?palestra_id=' . $palestraLd['id'],
             'price' => '0',
             'priceCurrency' => 'BRL',
             'availability' => 'https://schema.org/InStock',

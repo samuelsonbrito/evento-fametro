@@ -57,7 +57,7 @@ function gerarCodigoQRCode($matricula, $palestra_id) {
 
 function checarAutenticacaoAdmin() {
     if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
-        header('Location: /evento-fametro/admin/login.php');
+        header('Location: /admin/login.php');
         exit;
     }
 }

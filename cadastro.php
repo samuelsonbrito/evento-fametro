@@ -52,7 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
         } catch (PDOException $e) {
-            $mensagem = "Erro ao processar inscrição: " . $e->getMessage();
+            error_log('Erro ao processar inscrição: ' . $e->getMessage());
+            $mensagem = "Erro ao processar sua inscrição. Tente novamente em instantes.";
             $tipoMensagem = "danger";
         }
     } else {

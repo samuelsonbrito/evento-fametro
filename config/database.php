@@ -2,9 +2,13 @@
 require_once __DIR__ . '/../includes/env.php';
 carregarEnv(__DIR__ . '/../.env');
 
-// Exibir erros do PHP no navegador durante os testes
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Erros só aparecem na tela se APP_DEBUG=true no .env (harness local sempre mostra,
+// via harness/config.local.php, que é um arquivo separado e não passa por aqui).
+// Em produção, sem APP_DEBUG, os erros só vão pro log do servidor — nunca pra tela.
+$appDebug = getenv('APP_DEBUG') === 'true';
+ini_set('display_errors', $appDebug ? '1' : '0');
+ini_set('display_startup_errors', $appDebug ? '1' : '0');
+ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
 function configEnvObrigatoria($chave)
@@ -37,7 +41,9 @@ try {
         ]
     );
 } catch (PDOException $e) {
-    die("<div style='color:red; font-family:sans-serif; padding:20px;'>
-            <h2>Erro de Conexão com o Banco de Dados:</h2>" . $e->getMessage() .
-         "</div>");
+    error_log('Erro de conexão com o banco: ' . $e->getMessage());
+    die("<div style='color:red; font-family:sans-serif; padding:20px;'>"
+        . "<h2>Erro de Conexão com o Banco de Dados</h2>"
+        . "<p>Tente novamente em instantes. Se persistir, contate o suporte.</p>"
+        . "</div>");
 }

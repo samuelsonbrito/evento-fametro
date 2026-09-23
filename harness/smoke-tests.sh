@@ -68,6 +68,26 @@ check_body_contains "Comprovante (seed) exibe QR"        "Comprovante de Inscri�
 check_body_contains "Ticket (seed) exibe QR"             "Comprovante de Inscrição" "$BASE_URL/ticket.php?codigo=QR-SEEDCONFIRMADO01"
 
 echo
+echo "-- Mensagens de erro não vazam detalhe do banco --"
+resp_dup1="$(curl -s -X POST "$BASE_URL/cadastro.php?palestra_id=5" \
+    --data-urlencode "nome_aluno=Smoke Duplicidade" \
+    --data-urlencode "email=smoke.dup1@exemplo.com" \
+    --data-urlencode "tipo_participante=aluno" \
+    --data-urlencode "matricula=SMOKE-DUP-001")"
+resp_dup2="$(curl -s -X POST "$BASE_URL/cadastro.php?palestra_id=5" \
+    --data-urlencode "nome_aluno=Smoke Duplicidade 2" \
+    --data-urlencode "email=smoke.dup2@exemplo.com" \
+    --data-urlencode "tipo_participante=aluno" \
+    --data-urlencode "matricula=SMOKE-DUP-001")"
+if printf '%s' "$resp_dup2" | grep -qF "Tente novamente em instantes" && ! printf '%s' "$resp_dup2" | grep -qi "SQLSTATE"; then
+    echo "PASS  Erro de duplicidade mostra mensagem genérica (sem SQLSTATE na tela)"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  Mensagem de erro deveria ser genérica, sem vazar SQLSTATE — veio: $resp_dup2"
+    FAIL=$((FAIL+1))
+fi
+
+echo
 echo "-- SEO --"
 check_body_contains "Home tem meta description"          'name="description"' "$BASE_URL/index.php"
 check_body_contains "Home é indexável"                    'name="robots" content="index, follow"' "$BASE_URL/index.php"

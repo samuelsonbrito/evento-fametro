@@ -3,7 +3,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /evento-fametro/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -14,7 +14,7 @@ $email       = sanitize($_POST['email'] ?? '');
 
 if (empty($palestra_id) || empty($nome_aluno) || empty($matricula) || empty($email)) {
     $_SESSION['erro'] = "Todos os campos do formulário são de preenchimento obrigatório.";
-    header("Location: /evento-fametro/cadastro.php?palestra_id={$palestra_id}");
+    header("Location: /cadastro.php?palestra_id={$palestra_id}");
     exit;
 }
 
@@ -24,14 +24,14 @@ try {
     $stmt->execute([$matricula, $palestra_id]);
     if ($stmt->fetch()) {
         $_SESSION['erro'] = "Você já está inscrito nesta palestra.";
-        header("Location: /evento-fametro/cadastro.php?palestra_id={$palestra_id}");
+        header("Location: /cadastro.php?palestra_id={$palestra_id}");
         exit;
     }
 
     // 2. Verificar CONFLITO de HORÁRIO com outras palestras
     if (verificarConflitoHorario($pdo, $matricula, $palestra_id)) {
         $_SESSION['erro'] = "Você já possui uma inscrição em outra palestra no mesmo horário!";
-        header("Location: /evento-fametro/cadastro.php?palestra_id={$palestra_id}");
+        header("Location: /cadastro.php?palestra_id={$palestra_id}");
         exit;
     }
 
@@ -44,11 +44,11 @@ try {
     $stmt->execute([$nome_aluno, $matricula, $email, $palestra_id, $codigo_qrcode]);
 
     // Redireciona para o Ticket de Confirmação
-    header("Location: /evento-fametro/ticket.php?codigo=" . urlencode($codigo_qrcode));
+    header("Location: /ticket.php?codigo=" . urlencode($codigo_qrcode));
     exit;
 
 } catch (PDOException $e) {
     $_SESSION['erro'] = "Erro ao processar inscrição: " . $e->getMessage();
-    header("Location: /evento-fametro/cadastro.php?palestra_id={$palestra_id}");
+    header("Location: /cadastro.php?palestra_id={$palestra_id}");
     exit;
 }

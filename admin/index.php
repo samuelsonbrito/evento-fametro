@@ -32,13 +32,13 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="text-muted">Visão geral e controle da Jornada Acadêmica FAMETRO</div>
       </div>
       <div class="col-auto ms-auto d-flex gap-2">
-        <a href="/evento-fametro/admin/inscritos.php" class="btn btn-outline-primary px-3 rounded-3 fw-bold">
+        <a href="/admin/inscritos.php" class="btn btn-outline-primary px-3 rounded-3 fw-bold">
           <i class="ti ti-users me-1 fs-4"></i> Todos os Inscritos
         </a>
-        <a href="/evento-fametro/admin/validar-qrcode.php" class="btn btn-danger px-3 rounded-3 fw-bold" style="background-color: #e30613; border-color: #e30613;">
+        <a href="/admin/validar-qrcode.php" class="btn btn-danger px-3 rounded-3 fw-bold" style="background-color: #e30613; border-color: #e30613;">
           <i class="ti ti-qrcode me-1 fs-4"></i> Ler QR Code
         </a>
-        <a href="/evento-fametro/admin/cadastrar-palestra.php" class="btn btn-primary px-3 rounded-3 fw-bold" style="background-color: #003a7a; border-color: #003a7a;">
+        <a href="/admin/cadastrar-palestra.php" class="btn btn-primary px-3 rounded-3 fw-bold" style="background-color: #003a7a; border-color: #003a7a;">
           <i class="ti ti-plus me-1 fs-4"></i> Nova Palestra
         </a>
       </div>
@@ -69,7 +69,7 @@ require_once __DIR__ . '/../includes/header.php';
     
     <!-- Inscrições Realizadas -->
     <div class="col-sm-6 col-lg-4">
-      <a href="/evento-fametro/admin/inscritos.php" class="text-decoration-none">
+      <a href="/admin/inscritos.php" class="text-decoration-none">
         <div class="card card-sm shadow-sm border-0 rounded-3">
           <div class="card-body p-3">
             <div class="row align-items-center">
@@ -147,7 +147,7 @@ require_once __DIR__ . '/../includes/header.php';
                   <span class="badge bg-primary text-white me-1"><?= $p['total_inscritos'] ?></span> / <?= $p['vagas'] ?> vagas
                 </td>
                 <td class="text-end">
-                  <a href="/evento-fametro/admin/inscritos.php?palestra_id=<?= $p['id'] ?>" class="btn btn-outline-primary btn-sm rounded-2 fw-semibold">
+                  <a href="/admin/inscritos.php?palestra_id=<?= $p['id'] ?>" class="btn btn-outline-primary btn-sm rounded-2 fw-semibold">
                     <i class="ti ti-list me-1"></i> Lista de Inscritos
                   </a>
                 </td>

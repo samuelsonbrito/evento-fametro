@@ -168,7 +168,7 @@ if (!$estaPresente) {
 
   <div class="container no-print mb-4">
     <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-4 shadow-sm border">
-      <a href="/evento-fametro/admin/inscritos.php" class="btn btn-outline-secondary rounded-3">
+      <a href="/admin/inscritos.php" class="btn btn-outline-secondary rounded-3">
         <i class="ti ti-arrow-left me-1"></i> Voltar para Inscritos
       </a>
       <button onclick="window.print()" class="btn btn-danger fw-bold rounded-3 px-4">
@@ -185,7 +185,7 @@ if (!$estaPresente) {
 
       <!-- Logo Centralizado -->
       <div class="mb-4">
-        <img src="/evento-fametro/assets/img/logo-fametro.png" alt="FAMETRO" class="logo-img">
+        <img src="/assets/img/logo-fametro.png" alt="FAMETRO" class="logo-img">
       </div>
 
       <h2 class="titulo-declaracao mb-4">Declaração de Participação</h2>

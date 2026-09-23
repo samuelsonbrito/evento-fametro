@@ -15,7 +15,7 @@ require_once __DIR__ . '/../includes/header.php';
     <h2 class="fw-bold text-fametro-blue m-0">
       <i class="ti ti-qrcode me-2"></i>Validador de QR Code
     </h2>
-    <a href="/evento-fametro/admin/index.php" class="btn btn-secondary rounded-3">
+    <a href="/admin/index.php" class="btn btn-secondary rounded-3">
       <i class="ti ti-arrow-left me-1"></i> Painel
     </a>
   </div>
@@ -94,7 +94,7 @@ function enviarCodigo(codigoBruto) {
     const formData = new FormData();
     formData.append('codigo_qrcode', codigo);
 
-    fetch('/evento-fametro/api/validar_presenca.php', {
+    fetch('/api/validar_presenca.php', {
         method: 'POST',
         body: formData
     })

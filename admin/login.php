@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['admin_logged'] = true;
                 $_SESSION['admin_user'] = $admin['usuario'];
 
-                header('Location: /evento-fametro/admin/index.php');
+                header('Location: /admin/index.php');
                 exit;
             } else {
                 $erro = 'Usuário ou senha incorretos.';
@@ -68,7 +68,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
           <?php endif; ?>
 
-          <form action="/evento-fametro/admin/login.php" method="POST" autocomplete="off">
+          <form action="/admin/login.php" method="POST" autocomplete="off">
             <div class="mb-3">
               <label class="form-label required">Usuário</label>
               <input type="text" name="usuario" class="form-control" placeholder="admin" required autofocus>

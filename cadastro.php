@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/functions.php';
 $palestra_id = filter_input(INPUT_GET, 'palestra_id', FILTER_VALIDATE_INT);
 
 if (!$palestra_id) {
-    header('Location: /evento-fametro/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -15,7 +15,7 @@ $stmt->execute([$palestra_id]);
 $palestra = $stmt->fetch();
 
 if (!$palestra) {
-    header('Location: /evento-fametro/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($jaInscrito) {
                 // Se já estiver inscrito, redireciona direto para o comprovante
-                header('Location: /evento-fametro/comprovante.php?codigo=' . urlencode($jaInscrito['codigo_qrcode']));
+                header('Location: /comprovante.php?codigo=' . urlencode($jaInscrito['codigo_qrcode']));
                 exit;
             } else {
                 $codigo_qrcode = 'QR-' . strtoupper(uniqid());
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$palestra_id, $nome_aluno, $email, $tipo_participante, $matricula, $codigo_qrcode]);
 
                 // Redireciona para a página de comprovante oficial
-                header('Location: /evento-fametro/comprovante.php?codigo=' . urlencode($codigo_qrcode));
+                header('Location: /comprovante.php?codigo=' . urlencode($codigo_qrcode));
                 exit;
             }
         } catch (PDOException $e) {
@@ -122,7 +122,7 @@ require_once __DIR__ . '/includes/header.php';
             </div>
 
             <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-2">
-              <a href="/evento-fametro/index.php" class="btn btn-secondary rounded-3 px-4">
+              <a href="/index.php" class="btn btn-secondary rounded-3 px-4">
                 <i class="ti ti-arrow-left me-1"></i> Voltar
               </a>
               <button type="submit" class="btn btn-danger rounded-3 px-4 fw-bold" style="background-color: #e30613; border-color: #e30613;">

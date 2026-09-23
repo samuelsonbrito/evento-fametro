@@ -2,30 +2,15 @@
 #
 # Bloqueia área administrativa, endpoints de API, uploads e internals — nada disso
 # tem valor de busca, e admin/API expõem dados pessoais de inscritos se indexados.
-#
-# NOTA: existe hoje uma duplicação conhecida entre https://eventofametro.com.br/ e
-# https://eventofametro.com.br/evento-fametro/ servindo o mesmo site (ver
-# harness/ISSUES.md). Por isso as regras abaixo cobrem os dois formatos de caminho —
-# depois que a duplicação for resolvida (redirect de uma cópia pra outra), dá pra
-# simplificar isso pra um só.
 
 User-agent: *
 Disallow: /admin/
-Disallow: /evento-fametro/admin/
 Disallow: /api/
-Disallow: /evento-fametro/api/
 Disallow: /uploads/
-Disallow: /evento-fametro/uploads/
 Disallow: /includes/
-Disallow: /evento-fametro/includes/
 Disallow: /config/
-Disallow: /evento-fametro/config/
 Disallow: /harness/
-Disallow: /evento-fametro/harness/
 Disallow: /comprovante.php
-Disallow: /evento-fametro/comprovante.php
 Disallow: /ticket.php
-Disallow: /evento-fametro/ticket.php
 
 Sitemap: https://eventofametro.com.br/sitemap.php
-Sitemap: https://eventofametro.com.br/evento-fametro/sitemap.php

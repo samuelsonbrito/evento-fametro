@@ -45,7 +45,7 @@ bash harness/start.sh
 ```
 
 Isso sobe:
-- **app** — `http://localhost:8080/evento-fametro/index.php`
+- **app** — `http://localhost:8080/index.php`
 - **phpMyAdmin** — `http://localhost:8081` (usuário `fametro`, senha `fametro_local_pw`)
 - **db** — MySQL exposto em `localhost:33061` se quiser conectar com outro cliente
 

@@ -121,7 +121,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <div class="d-flex justify-content-between pt-3 border-top">
-              <a href="/evento-fametro/admin/index.php" class="btn btn-secondary px-4 rounded-3">
+              <a href="/admin/index.php" class="btn btn-secondary px-4 rounded-3">
                 <i class="ti ti-arrow-left me-1"></i> Voltar ao Painel
               </a>
               <button type="submit" class="btn btn-danger px-4 rounded-3 fw-bold" style="background-color: #e30613; border-color: #e30613;">

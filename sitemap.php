@@ -5,10 +5,8 @@ require_once __DIR__ . '/includes/functions.php';
 header('Content-Type: application/xml; charset=utf-8');
 
 // Gerado dinamicamente (em vez de um .xml estático) porque a lista de palestras muda
-// pelo painel admin — assim o sitemap nunca fica desatualizado. Caminho fixo em
-// /evento-fametro/ pra bater com os links absolutos usados no resto do app (ver
-// includes/functions.php, SITE_URL).
-$baseUrl = SITE_URL . '/evento-fametro';
+// pelo painel admin — assim o sitemap nunca fica desatualizado.
+$baseUrl = SITE_URL;
 
 try {
     $palestras = $pdo->query('SELECT id FROM palestras ORDER BY id ASC')->fetchAll();

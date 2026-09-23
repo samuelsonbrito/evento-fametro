@@ -205,7 +205,7 @@ $inscritos = $stmtInscritos->fetchAll(PDO::FETCH_ASSOC);
 
           <!-- Logo Centralizado -->
           <div class="mb-4">
-            <img src="/evento-fametro/assets/img/logo-fametro.png" alt="FAMETRO" class="logo-img">
+            <img src="/assets/img/logo-fametro.png" alt="FAMETRO" class="logo-img">
           </div>
 
           <h2 class="titulo-declaracao mb-4">Declaração de Participação</h2>

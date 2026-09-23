@@ -39,11 +39,11 @@ require_once __DIR__ . '/../includes/header.php';
     </h2>
     <div class="d-flex gap-2">
       <?php if ($palestra_id): ?>
-        <a href="/evento-fametro/admin/imprimir-comprovantes-lote.php?palestra_id=<?= $palestra_id ?>" target="_blank" class="btn btn-success rounded-3 fw-bold">
+        <a href="/admin/imprimir-comprovantes-lote.php?palestra_id=<?= $palestra_id ?>" target="_blank" class="btn btn-success rounded-3 fw-bold">
           <i class="ti ti-printer me-1"></i> Imprimir Declarações em Lote
         </a>
       <?php endif; ?>
-      <a href="/evento-fametro/admin/index.php" class="btn btn-secondary rounded-3">
+      <a href="/admin/index.php" class="btn btn-secondary rounded-3">
         <i class="ti ti-arrow-left me-1"></i> Painel
       </a>
     </div>
@@ -66,7 +66,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
         <div class="col-md-4 d-flex align-items-end">
           <?php if ($palestra_id): ?>
-            <a href="/evento-fametro/admin/inscritos.php" class="btn btn-outline-secondary rounded-3 w-100">
+            <a href="/admin/inscritos.php" class="btn btn-outline-secondary rounded-3 w-100">
               Ver Todos
             </a>
           <?php endif; ?>
@@ -126,7 +126,7 @@ require_once __DIR__ . '/../includes/header.php';
                   </td>
                   <td class="text-end pe-3">
                     <?php if ($estaPresente): ?>
-                      <a href="/evento-fametro/admin/imprimir-comprovante.php?id=<?= $row['id'] ?>" target="_blank" class="btn btn-sm btn-success rounded-3 fw-bold">
+                      <a href="/admin/imprimir-comprovante.php?id=<?= $row['id'] ?>" target="_blank" class="btn btn-sm btn-success rounded-3 fw-bold">
                         <i class="ti ti-file-text me-1"></i> Declaração
                       </a>
                     <?php else: ?>

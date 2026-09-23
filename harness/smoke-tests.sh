@@ -55,6 +55,19 @@ check_body_contains() {
     fi
 }
 
+check_header_contains() {
+    local desc="$1" needle="$2"; shift 2
+    local headers
+    headers="$(curl -sI "$@")"
+    if printf '%s' "$headers" | grep -qiF "$needle"; then
+        echo "PASS  $desc"
+        PASS=$((PASS+1))
+    else
+        echo "FAIL  $desc (não encontrou no header: \"$needle\")"
+        FAIL=$((FAIL+1))
+    fi
+}
+
 echo "== Alvo: $BASE_URL =="
 echo
 
@@ -86,6 +99,16 @@ else
     echo "FAIL  Mensagem de erro deveria ser genérica, sem vazar SQLSTATE — veio: $resp_dup2"
     FAIL=$((FAIL+1))
 fi
+
+echo
+echo "-- Headers de segurança e cookie de sessão --"
+check_header_contains "X-Content-Type-Options presente"  "X-Content-Type-Options: nosniff" "$BASE_URL/index.php"
+check_header_contains "X-Frame-Options presente"         "X-Frame-Options: DENY" "$BASE_URL/index.php"
+check_header_contains "CSP report-only presente"         "Content-Security-Policy-Report-Only" "$BASE_URL/index.php"
+check_header_contains "Cookie de sessão é HttpOnly"       "HttpOnly" "$BASE_URL/index.php"
+check_header_contains "Cookie de sessão é SameSite=Lax"   "SameSite=Lax" "$BASE_URL/index.php"
+check_header_contains "Cookie de sessão fica Secure atrás de proxy HTTPS" "secure" \
+    -H "X-Forwarded-Proto: https" "$BASE_URL/index.php"
 
 echo
 echo "-- SEO --"

@@ -94,15 +94,37 @@ corrigidos estão marcados abaixo, o resto é backlog.
 
 5. **Sem proteção CSRF em nenhum formulário.**
    `cadastro.php`, `admin/login.php`, `admin/cadastrar-palestra.php` — formulários POST
-   sem token. Como o login aceita GET indiretamente via redirecionamento e não há
-   `SameSite`/CSRF configurado, um site malicioso poderia submeter esses formulários em
-   nome de uma sessão de admin já autenticada.
+   sem token. Um site malicioso poderia submeter esses formulários em nome de uma
+   sessão de admin já autenticada. **Parcialmente mitigado em 2026-09-23**: o cookie
+   de sessão agora sai com `SameSite=Lax` (ver item 6b), o que já bloqueia a maioria
+   dos ataques CSRF cross-site na prática — mas token de verdade nos formulários
+   ainda está no plano de correção, é a defesa completa.
 
 6. **Sem rate limiting.**
    `admin/login.php` (força bruta de senha) e `api/validar_presenca.php`, agora que
    exige sessão de admin (ver item 2c), fica menos exposto a martelamento externo —
    mas ainda vale limitar tentativas por sessão/IP pra dificultar erro operacional em
    massa no dia do evento.
+
+6b. **[CORRIGIDO em 2026-09-23] Cookie de sessão sem `Secure`/`HttpOnly`/`SameSite`.**
+   Adicionada `iniciarSessaoSegura()` em `includes/functions.php`, chamada antes de
+   qualquer `session_start()` (substituindo as 3 chamadas cruas que existiam em
+   `includes/functions.php`, `includes/header.php` e `admin/logout.php`). Define
+   `HttpOnly` (sempre), `SameSite=Lax` (sempre) e `Secure` quando a conexão é HTTPS —
+   detectado via `$_SERVER['HTTPS']` **ou** `X-Forwarded-Proto: https` **ou** porta
+   443, porque o site passa pelo proxy da Umbler em produção e `$_SERVER['HTTPS']`
+   sozinho pode não refletir o que o navegador do visitante usou de verdade.
+   Confirmado no harness simulando o header do proxy.
+
+6c. **[CORRIGIDO em 2026-09-23] Nenhum header de segurança.** `includes/functions.php`
+   agora emite `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+   `Referrer-Policy: strict-origin-when-cross-origin` e uma
+   `Content-Security-Policy-Report-Only` em toda página (inclusive as APIs). A CSP
+   está deliberadamente em **report-only**, não enforced: o app carrega recursos de
+   `cdn.jsdelivr.net`, `unpkg.com`, `quickchart.io`, `actions.google.com`, e usa
+   bastante estilo/script inline — enforcar sem calibrar direito quebraria o site
+   silenciosamente. Trocar pra `Content-Security-Policy` de verdade depois de um
+   tempo monitorando violações é um passo manual futuro, não feito aqui.
 
 7. **[CORRIGIDO em 2026-09-22] `api/validar_presenca.php` aceitava `i.id` como código
    válido.** A query casava `codigo_qrcode` OU `i.id`, então digitar um ID pequeno

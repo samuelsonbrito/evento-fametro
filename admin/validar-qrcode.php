@@ -10,6 +10,11 @@ $pageNoIndex = true;
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
+<!-- Aviso fixo no topo da tela — some ao rolar, então precisa ficar acima de tudo
+     pra dar pra ver o resultado sem precisar rolar até o card do leitor -->
+<div id="toastValidacao" class="position-fixed start-50 translate-middle-x d-none"
+     style="top: 10px; z-index: 2000; width: 94%; max-width: 460px;"></div>
+
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold text-fametro-blue m-0">
@@ -72,6 +77,27 @@ function extrairCodigoLimpo(texto) {
     return texto;
 }
 
+let timerToast = null;
+
+// Toast fixo no topo, visível mesmo sem rolar a tela até o card do leitor —
+// importante em celulares menores, onde o resultado abaixo do QR Code fica
+// fora da área visível.
+function mostrarToast(tipo, icone, titulo, detalhe) {
+    const toast = document.getElementById('toastValidacao');
+    if (timerToast) clearTimeout(timerToast);
+
+    toast.innerHTML = `
+        <div class="alert alert-${tipo} border-0 shadow-lg text-center p-3 rounded-4 mb-0">
+            <div class="h5 fw-bold mb-1"><i class="ti ${icone} me-2"></i>${titulo}</div>
+            ${detalhe ? `<div class="small fw-semibold">${detalhe}</div>` : ''}
+        </div>`;
+    toast.classList.remove('d-none');
+
+    timerToast = setTimeout(() => {
+        toast.classList.add('d-none');
+    }, 3500);
+}
+
 function enviarCodigo(codigoBruto) {
     const codigo = extrairCodigoLimpo(codigoBruto);
     
@@ -112,6 +138,7 @@ function enviarCodigo(codigoBruto) {
                     <p class="fs-5 fw-bold mb-1 text-dark">${data.aluno || 'Participante'}</p>
                     <p class="text-muted small mb-0">Palestra: <strong>${data.palestra || 'Palestra FAMETRO'}</strong></p>
                 </div>`;
+            mostrarToast('success', 'ti-circle-check-filled', 'Entrada confirmada!', data.aluno || 'Participante');
         } else {
             try { audioErro.play(); } catch(e){}
             resDiv.innerHTML = `
@@ -122,6 +149,7 @@ function enviarCodigo(codigoBruto) {
                     <p class="fs-6 fw-bold mb-1">${data.mensagem || 'Código inválido.'}</p>
                     ${data.aluno ? `<p class="small mb-0 text-dark">Aluno: <strong>${data.aluno}</strong></p>` : ''}
                 </div>`;
+            mostrarToast('danger', 'ti-alert-circle-filled', 'Não autenticada', data.mensagem || 'Código inválido.');
         }
     })
     .catch(err => {
@@ -131,6 +159,7 @@ function enviarCodigo(codigoBruto) {
             <div class="alert alert-warning border-0 shadow text-center p-3 mb-0">
                 <h6 class="fw-bold mb-0"><i class="ti ti-wifi-off me-2"></i>Erro de Conexão com o Servidor</h6>
             </div>`;
+        mostrarToast('warning', 'ti-wifi-off', 'Erro de conexão', 'Tente novamente.');
     });
 }
 

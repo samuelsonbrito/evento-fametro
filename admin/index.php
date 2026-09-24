@@ -157,6 +157,9 @@ require_once __DIR__ . '/../includes/header.php';
                   <span class="badge bg-primary text-white me-1"><?= $p['total_inscritos'] ?></span> / <?= $p['vagas'] ?> vagas
                 </td>
                 <td class="text-end">
+                  <a href="/admin/editar-palestra.php?id=<?= $p['id'] ?>" class="btn btn-outline-secondary btn-sm rounded-2 fw-semibold me-1">
+                    <i class="ti ti-pencil me-1"></i> Editar
+                  </a>
                   <a href="/admin/inscritos.php?palestra_id=<?= $p['id'] ?>" class="btn btn-outline-primary btn-sm rounded-2 fw-semibold">
                     <i class="ti ti-list me-1"></i> Lista de Inscritos
                   </a>

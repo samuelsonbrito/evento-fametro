@@ -46,7 +46,7 @@ $totalNovos = $pdo->query("SELECT COUNT(*) FROM relatos_erro WHERE status = 'nov
 $tipoLabel = ['erro' => 'Erro técnico', 'sugestao' => 'Sugestão', 'outro' => 'Outro'];
 $tipoBadge = ['erro' => 'bg-danger', 'sugestao' => 'bg-info', 'outro' => 'bg-secondary'];
 
-$pageTitle = 'Relatos de Problemas | Jornada Acadêmica Imersão FAMETRO';
+$pageTitle = 'Relatos de Problemas | Jornada Acadêmica Imersão IA FAMETRO';
 $pageNoIndex = true;
 
 require_once __DIR__ . '/../includes/header.php';

@@ -11,7 +11,7 @@ try {
 }
 
 $pageTitle = 'Jornada Acadêmica Imersão IA FAMETRO — 2 de Outubro | Inscrições Abertas';
-$pageDescription = 'Inscreva-se gratuitamente na Jornada Acadêmica Imersão FAMETRO: palestras sobre Inteligência Artificial, até 15h de horas complementares e credenciamento por QR Code. Vagas limitadas.';
+$pageDescription = 'Inscreva-se gratuitamente na Jornada Acadêmica Imersão IA FAMETRO: palestras sobre Inteligência Artificial, até 15h de horas complementares e credenciamento por QR Code. Vagas limitadas.';
 
 require_once __DIR__ . '/includes/header.php';
 ?>

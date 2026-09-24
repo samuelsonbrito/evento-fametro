@@ -35,7 +35,7 @@ foreach ($palestras as $p) {
 
 $totalGeral = $totalInterno + $totalExterno;
 
-$pageTitle = 'Estatísticas | Jornada Acadêmica Imersão FAMETRO';
+$pageTitle = 'Estatísticas | Jornada Acadêmica Imersão IA FAMETRO';
 $pageNoIndex = true;
 
 require_once __DIR__ . '/../includes/header.php';

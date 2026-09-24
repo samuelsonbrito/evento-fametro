@@ -1,4 +1,4 @@
-# Regras de rastreamento do site da Jornada Acadêmica Imersão FAMETRO.
+# Regras de rastreamento do site da Jornada Acadêmica Imersão IA FAMETRO.
 #
 # Bloqueia área administrativa, endpoints de API, uploads e internals — nada disso
 # tem valor de busca, e admin/API expõem dados pessoais de inscritos se indexados.

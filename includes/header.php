@@ -4,8 +4,8 @@ iniciarSessaoSegura();
 // Cada página pode definir $pageTitle/$pageDescription/$pageImage/$pageNoIndex/
 // $pageCanonical antes de dar require neste arquivo. Sem isso, cai nos padrões
 // abaixo (bons o bastante pra home, mas genéricos demais pra páginas internas).
-$pageTitle       = $pageTitle ?? 'Jornada Acadêmica Imersão FAMETRO — Inscrições Abertas';
-$pageDescription = $pageDescription ?? 'Inscreva-se gratuitamente na Jornada Acadêmica Imersão FAMETRO, dia 2 de outubro. Palestras sobre Inteligência Artificial, até 15h complementares e credenciamento por QR Code.';
+$pageTitle       = $pageTitle ?? 'Jornada Acadêmica Imersão IA FAMETRO — Inscrições Abertas';
+$pageDescription = $pageDescription ?? 'Inscreva-se gratuitamente na Jornada Acadêmica Imersão IA FAMETRO, dia 2 de outubro. Palestras sobre Inteligência Artificial, até 15h complementares e credenciamento por QR Code.';
 $pageImage       = $pageImage ?? SITE_URL . '/assets/img/principal.png';
 $pageNoIndex     = $pageNoIndex ?? false;
 $pageCanonical   = $pageCanonical ?? SITE_URL . ($_SERVER['REQUEST_URI'] ?? '/index.php');
@@ -23,7 +23,7 @@ $pageCanonical   = $pageCanonical ?? SITE_URL . ($_SERVER['REQUEST_URI'] ?? '/in
     <!-- Open Graph / compartilhamento em redes sociais -->
     <meta property="og:type" content="website"/>
     <meta property="og:locale" content="pt_BR"/>
-    <meta property="og:site_name" content="Jornada Acadêmica Imersão FAMETRO"/>
+    <meta property="og:site_name" content="Jornada Acadêmica Imersão IA FAMETRO"/>
     <meta property="og:title" content="<?= htmlspecialchars($pageTitle) ?>"/>
     <meta property="og:description" content="<?= htmlspecialchars($pageDescription) ?>"/>
     <meta property="og:url" content="<?= htmlspecialchars($pageCanonical) ?>"/>
@@ -47,7 +47,7 @@ $pageCanonical   = $pageCanonical ?? SITE_URL . ($_SERVER['REQUEST_URI'] ?? '/in
         <div class="container-xl">
           <a href="/index.php" class="navbar-brand d-flex align-items-center">
             <img src="/assets/img/logo-fametro.png" alt="FAMETRO" style="height: 38px;" class="me-2" onerror="this.style.display='none'">
-            <span class="fw-bold text-fametro-blue d-none d-sm-inline">Imersão FAMETRO</span>
+            <span class="fw-bold text-fametro-blue d-none d-sm-inline">Imersão IA FAMETRO</span>
           </a>
           <div class="navbar-nav ms-auto">
             <a href="/consultar-inscricao.php" class="btn btn-outline-secondary btn-sm me-2">

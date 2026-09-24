@@ -65,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = 'Inscrição — ' . $palestra['titulo'] . ' | Jornada Acadêmica Imersão FAMETRO';
-$pageDescription = 'Inscreva-se na palestra "' . $palestra['titulo'] . '", com ' . $palestra['palestrante'] . ', na Jornada Acadêmica Imersão FAMETRO (2 de outubro).';
+$pageTitle = 'Inscrição — ' . $palestra['titulo'] . ' | Jornada Acadêmica Imersão IA FAMETRO';
+$pageDescription = 'Inscreva-se na palestra "' . $palestra['titulo'] . '", com ' . $palestra['palestrante'] . ', na Jornada Acadêmica Imersão IA FAMETRO (2 de outubro).';
 
 require_once __DIR__ . '/includes/header.php';
 ?>

@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/functions.php';
 
 checarAutenticacaoAdmin();
 
-$pageTitle = 'Validador de QR Code | Jornada Acadêmica Imersão FAMETRO';
+$pageTitle = 'Validador de QR Code | Jornada Acadêmica Imersão IA FAMETRO';
 $pageNoIndex = true;
 
 require_once __DIR__ . '/../includes/header.php';

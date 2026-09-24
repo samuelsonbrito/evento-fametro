@@ -50,8 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = 'Consultar Inscrição | Jornada Acadêmica Imersão FAMETRO';
-$pageDescription = 'Consulte sua inscrição na Jornada Acadêmica Imersão FAMETRO e acesse seu QR Code de credenciamento.';
+$pageTitle = 'Consultar Inscrição | Jornada Acadêmica Imersão IA FAMETRO';
+$pageDescription = 'Consulte sua inscrição na Jornada Acadêmica Imersão IA FAMETRO e acesse seu QR Code de credenciamento.';
 $pageNoIndex = true;
 
 require_once __DIR__ . '/includes/header.php';

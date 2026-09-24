@@ -19,7 +19,7 @@ $palestras = $pdo->query("
     ORDER BY p.horario_inicio ASC
 ")->fetchAll();
 
-$pageTitle = 'Painel Administrativo | Jornada Acadêmica Imersão FAMETRO';
+$pageTitle = 'Painel Administrativo | Jornada Acadêmica Imersão IA FAMETRO';
 $pageNoIndex = true;
 
 require_once __DIR__ . '/../includes/header.php';

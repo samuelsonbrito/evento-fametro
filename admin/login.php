@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = 'Login Administrativo | Jornada Acadêmica Imersão FAMETRO';
+$pageTitle = 'Login Administrativo | Jornada Acadêmica Imersão IA FAMETRO';
 $pageNoIndex = true;
 
 require_once __DIR__ . '/../includes/header.php';
@@ -66,7 +66,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="card-body p-4">
           <div class="text-center mb-4">
             <h2 class="text-fametro-blue font-weight-bold">Painel ADM</h2>
-            <p class="text-muted small">Jornada Acadêmica Imersão FAMETRO</p>
+            <p class="text-muted small">Jornada Acadêmica Imersão IA FAMETRO</p>
           </div>
 
           <?php if (!empty($erro)): ?>

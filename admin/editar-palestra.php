@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validarTokenCSRF($_POST['csrf_toke
     }
 }
 
-$pageTitle = 'Editar Palestra | Jornada Acadêmica Imersão FAMETRO';
+$pageTitle = 'Editar Palestra | Jornada Acadêmica Imersão IA FAMETRO';
 $pageNoIndex = true;
 
 require_once __DIR__ . '/../includes/header.php';

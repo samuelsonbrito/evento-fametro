@@ -58,7 +58,7 @@ $qrUrl = "https://quickchart.io/qr?text=" . urlencode($codigoQR) . "&size=300";
             <p class="mb-1">
               <strong>Tipo:</strong> 
               <?php if (($dados['tipo_participante'] ?? 'aluno') === 'externo'): ?>
-                <span class="badge bg-secondary">Público Externo</span>
+                <span class="badge bg-fametro-red">Público Externo</span>
               <?php else: ?>
                 <span class="badge bg-primary">Aluno FAMETRO</span>
               <?php endif; ?>

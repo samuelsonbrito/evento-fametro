@@ -122,7 +122,7 @@ require_once __DIR__ . '/includes/header.php';
                       <i class="ti ti-clock me-1"></i>
                       <?= date('H:i', strtotime($i['horario_inicio'])) ?> - <?= date('H:i', strtotime($i['horario_fim'])) ?>
                       <?php if (($i['tipo_participante'] ?? 'aluno') === 'externo'): ?>
-                        <span class="badge bg-secondary ms-2">Externo</span>
+                        <span class="badge bg-fametro-red ms-2">Externo</span>
                       <?php else: ?>
                         <span class="badge bg-primary ms-2">Aluno</span>
                       <?php endif; ?>

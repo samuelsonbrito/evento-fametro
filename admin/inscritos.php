@@ -111,7 +111,7 @@ require_once __DIR__ . '/../includes/header.php';
                   </td>
                   <td>
                     <?php if (($row['tipo_participante'] ?? 'aluno') === 'externo'): ?>
-                      <span class="badge bg-secondary">Externo</span>
+                      <span class="badge bg-fametro-red">Externo</span>
                     <?php else: ?>
                       <span class="badge bg-primary">Aluno</span>
                     <?php endif; ?>

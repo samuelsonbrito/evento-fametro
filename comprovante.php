@@ -87,11 +87,11 @@ $qrUrl = "https://quickchart.io/qr?text=" . urlencode($codigoQR) . "&size=300";
             Apresente este QR Code na entrada da palestra para registrar sua presença.
           </p>
 
-          <div class="d-print-none d-flex justify-content-between align-items-center pt-2 border-top">
+          <div class="d-print-none d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top">
             <a href="/index.php" class="btn btn-secondary rounded-3">
               <i class="ti ti-home me-1"></i> Início
             </a>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
               <a href="<?= $qrUrl ?>" download="Ticket_<?= $codigoQR ?>.png" target="_blank" class="btn btn-success rounded-3 fw-bold">
                 <i class="ti ti-download me-1"></i> Baixar QR
               </a>

@@ -20,9 +20,13 @@ require_once __DIR__ . '/includes/header.php';
   .card-palestra {
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   }
-  .card-palestra:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0, 58, 122, 0.12) !important;
+  /* Só em dispositivos com mouse: no iPhone o :hover "gruda" depois do toque
+     e o card fica levantado/deslocado até tocar em outro lugar. */
+  @media (hover: hover) {
+    .card-palestra:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0, 58, 122, 0.12) !important;
+    }
   }
   .btn-inscrever {
     background-color: #e30613;
@@ -53,7 +57,7 @@ require_once __DIR__ . '/includes/header.php';
       </div>
 
       <!-- Título Principal -->
-      <h1 class="fw-bold mb-2 text-white text-uppercase" style="font-size: 2.3rem; letter-spacing: -0.5px;">
+      <h1 class="fw-bold mb-2 text-white text-uppercase" style="font-size: clamp(1.6rem, 6vw, 2.3rem); letter-spacing: -0.5px; overflow-wrap: break-word;">
         Jornada Acadêmica <span style="color: #ff4d5a;">Imersão IA FAMETRO</span>
       </h1>
 

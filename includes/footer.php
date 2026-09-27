@@ -7,7 +7,7 @@
     </div>
 
     <!-- Botão flutuante "Reportar problema" -->
-    <button type="button" class="btn btn-fametro-red rounded-pill shadow d-print-none d-flex align-items-center gap-1"
+    <button type="button" class="btn btn-fametro-red btn-reportar-flutuante rounded-pill shadow d-print-none d-flex align-items-center gap-1"
             style="position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 1030; padding: 0.6rem 1rem;"
             data-bs-toggle="modal" data-bs-target="#modalReportarErro">
       <i class="ti ti-message-report fs-4"></i>

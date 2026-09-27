@@ -93,7 +93,7 @@ require_once __DIR__ . '/includes/header.php';
                      value="<?= htmlspecialchars($matriculaBusca) ?>">
             </div>
 
-            <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-2">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-3 border-top mt-2">
               <a href="/index.php" class="btn btn-secondary rounded-3 px-4">
                 <i class="ti ti-arrow-left me-1"></i> Voltar
               </a>

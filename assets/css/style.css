@@ -66,3 +66,51 @@
   font-weight: 800;
   letter-spacing: -0.5px;
 }
+
+/* ---------------------------------------------------------------------------
+   Compatibilidade Safari / iOS
+   --------------------------------------------------------------------------- */
+
+/* O Safari do iPhone dá zoom automático ao focar campos com fonte < 16px e a
+   página fica "ampliada" e desalinhada depois. O Tabler usa 14px nos campos. */
+@media (max-width: 767.98px) {
+  .form-control,
+  .form-select,
+  textarea,
+  select,
+  input[type="text"],
+  input[type="email"] {
+    font-size: 16px;
+  }
+}
+
+/* Abaixo de 768px o Tabler empilha o .navbar-nav em coluna (espera um menu
+   colapsável que não usamos) — mantém os botões do topo lado a lado. */
+.navbar .navbar-nav {
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  row-gap: 0.25rem;
+  flex-grow: 0;
+}
+
+/* O header usa viewport-fit=cover: sem isso, no iPhone o conteúdo fica embaixo
+   do notch (paisagem) e da barra de gestos. */
+.page {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.btn-reportar-flutuante {
+  right: calc(1.25rem + env(safe-area-inset-right, 0px)) !important;
+  bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* Espaço no fim da página pro botão flutuante não cobrir o rodapé/botões. */
+@media (max-width: 767.98px) {
+  .page-wrapper {
+    padding-bottom: 4.5rem;
+  }
+}

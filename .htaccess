@@ -6,3 +6,10 @@
   Header always unset Upgrade
   Header unset Upgrade
 </IfModule>
+
+# /llms.txt (resumo do site para assistentes de IA) é gerado por llms.php, pra
+# acompanhar a programação cadastrada no painel.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^llms\.txt$ llms.php [L]
+</IfModule>

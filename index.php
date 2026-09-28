@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/evento.php';
 
 // Buscar todas as palestras cadastradas ordenadas pelo horário
 try {
@@ -189,51 +190,113 @@ require_once __DIR__ . '/includes/header.php';
       <?php endforeach; ?>
     </div>
   <?php endif; ?>
+
+  <!-- Sobre o evento + Perguntas frequentes. Texto visível (e não só em JSON-LD) de
+       propósito: é daqui que Google e buscas por IA tiram as respostas. -->
+  <section class="mt-5" id="sobre" aria-labelledby="tituloSobre">
+    <h2 id="tituloSobre" class="h3 fw-bold mb-2" style="color: #003a7a;">Sobre a <?= EVENTO_NOME ?></h2>
+    <p class="text-muted mb-4" style="max-width: 820px;">
+      <?= htmlspecialchars(EVENTO_RESUMO) ?>
+      Acontece em <strong><?= EVENTO_DATA_EXTENSO ?></strong>, no <?= htmlspecialchars(eventoLocalTexto()) ?>.
+    </p>
+
+    <h3 class="h4 fw-bold mb-3" style="color: #003a7a;">Perguntas frequentes</h3>
+    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+      <div class="list-group list-group-flush">
+        <?php foreach (eventoPerguntasFrequentes() as $faq): ?>
+          <details class="list-group-item p-3 faq-item">
+            <summary class="fw-bold text-dark"><?= htmlspecialchars($faq['pergunta']) ?></summary>
+            <p class="text-muted mt-2 mb-0"><?= htmlspecialchars($faq['resposta']) ?></p>
+          </details>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </section>
 </div>
 
 <?php
-// Dados estruturados (Schema.org/Event) — um bloco por palestra, pra habilitar rich
-// results de evento no Google. titulo/palestrante/descricao já vêm com
-// htmlspecialchars() aplicado na inserção (ver sanitize() em includes/functions.php),
-// então não há risco de fechar a tag <script> com conteúdo vindo do banco.
-foreach ($palestras as $palestraLd):
+// Dados estruturados (Schema.org) num único @graph: a Jornada como Event "pai", cada
+// palestra como subEvent, a organização e o FAQ. Isso é o que Google (rich results) e
+// buscas por IA usam pra entender o evento sem depender do layout da página.
+// Os campos do banco vêm com htmlspecialchars() aplicado na inserção, então passam
+// por textoPuro(); JSON_HEX_TAG impede que algum "</script>" feche a tag.
+$organizacaoLd = [
+    '@type' => 'Organization',
+    '@id' => SITE_URL . '/#organizacao',
+    'name' => 'Centro Universitário FAMETRO',
+    'url' => SITE_URL,
+    'logo' => SITE_URL . '/assets/img/logo-fametro.png',
+];
+
+$ofertaLd = function ($url) {
+    return [
+        '@type' => 'Offer',
+        'url' => $url,
+        'price' => '0',
+        'priceCurrency' => 'BRL',
+        'availability' => 'https://schema.org/InStock',
+    ];
+};
+
+$palestrasLd = [];
+foreach ($palestras as $palestraLd) {
     $imagemLd = !empty($palestraLd['foto']) && file_exists(__DIR__ . '/uploads/palestrantes/' . $palestraLd['foto'])
         ? SITE_URL . '/uploads/palestrantes/' . rawurlencode($palestraLd['foto'])
         : $pageImage;
 
-    $eventoLd = [
-        '@context' => 'https://schema.org',
+    $palestrasLd[] = [
         '@type' => 'Event',
-        'name' => $palestraLd['titulo'],
-        'description' => $palestraLd['descricao'],
+        'name' => textoPuro($palestraLd['titulo']),
+        'description' => textoPuro($palestraLd['descricao']),
         'startDate' => EVENTO_DATA . 'T' . $palestraLd['horario_inicio'] . '-03:00',
         'endDate' => EVENTO_DATA . 'T' . $palestraLd['horario_fim'] . '-03:00',
         'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
         'eventStatus' => 'https://schema.org/EventScheduled',
+        'inLanguage' => 'pt-BR',
+        'isAccessibleForFree' => true,
         'image' => [$imagemLd],
-        'location' => [
-            '@type' => 'Place',
-            'name' => 'Centro Universitário FAMETRO',
-        ],
-        'performer' => [
-            '@type' => 'Person',
-            'name' => $palestraLd['palestrante'],
-        ],
-        'organizer' => [
-            '@type' => 'Organization',
-            'name' => 'Centro Universitário FAMETRO',
-            'url' => SITE_URL,
-        ],
-        'offers' => [
-            '@type' => 'Offer',
-            'url' => SITE_URL . '/cadastro.php?palestra_id=' . $palestraLd['id'],
-            'price' => '0',
-            'priceCurrency' => 'BRL',
-            'availability' => 'https://schema.org/InStock',
-        ],
+        'location' => eventoLocalSchema(),
+        'performer' => ['@type' => 'Person', 'name' => textoPuro($palestraLd['palestrante'])],
+        'organizer' => ['@id' => SITE_URL . '/#organizacao'],
+        'offers' => $ofertaLd(SITE_URL . '/cadastro.php?palestra_id=' . (int) $palestraLd['id']),
     ];
+}
+
+$jornadaLd = [
+    '@type' => 'Event',
+    '@id' => SITE_URL . '/#evento',
+    'name' => EVENTO_NOME,
+    'description' => EVENTO_RESUMO,
+    'url' => SITE_URL . '/index.php',
+    'startDate' => $palestrasLd ? min(array_column($palestrasLd, 'startDate')) : EVENTO_DATA,
+    'endDate' => $palestrasLd ? max(array_column($palestrasLd, 'endDate')) : EVENTO_DATA,
+    'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
+    'eventStatus' => 'https://schema.org/EventScheduled',
+    'inLanguage' => 'pt-BR',
+    'isAccessibleForFree' => true,
+    'image' => [$pageImage],
+    'location' => eventoLocalSchema(),
+    'organizer' => ['@id' => SITE_URL . '/#organizacao'],
+    'offers' => $ofertaLd(SITE_URL . '/index.php'),
+    'subEvent' => $palestrasLd,
+];
+
+$faqLd = [
+    '@type' => 'FAQPage',
+    'mainEntity' => array_map(function ($faq) {
+        return [
+            '@type' => 'Question',
+            'name' => $faq['pergunta'],
+            'acceptedAnswer' => ['@type' => 'Answer', 'text' => $faq['resposta']],
+        ];
+    }, eventoPerguntasFrequentes()),
+];
+
+$grafoLd = [
+    '@context' => 'https://schema.org',
+    '@graph' => [$organizacaoLd, $jornadaLd, $faqLd],
+];
 ?>
-<script type="application/ld+json"><?= json_encode($eventoLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
-<?php endforeach; ?>
+<script type="application/ld+json"><?= json_encode($grafoLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

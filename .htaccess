@@ -1,0 +1,8 @@
+# O servidor (Apache atrás do proxy da Umbler) manda o cabeçalho
+# "Upgrade: h2,h2c" nos arquivos estáticos (imagens, CSS, robots.txt) mesmo em
+# conexões HTTP/2, onde esse cabeçalho é proibido. Chrome e Firefox ignoram, mas o
+# Safari (iPhone/Mac) rejeita a resposta inteira e a imagem não carrega.
+<IfModule mod_headers.c>
+  Header always unset Upgrade
+  Header unset Upgrade
+</IfModule>

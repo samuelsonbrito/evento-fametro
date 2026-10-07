@@ -32,6 +32,7 @@ DROP TABLE IF EXISTS palestras;
 DROP TABLE IF EXISTS administradores;
 DROP TABLE IF EXISTS tentativas_login;
 DROP TABLE IF EXISTS relatos_erro;
+DROP TABLE IF EXISTS certificados_emitidos;
 
 -- 3. Cria a tabela 'administradores'
 CREATE TABLE administradores (
@@ -125,6 +126,20 @@ CREATE TABLE relatos_erro (
   status enum('novo','resolvido') NOT NULL DEFAULT 'novo',
   criado_em timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. Cria a tabela 'certificados_emitidos' (estatísticas de emissão de certificado,
+-- uma linha por pessoa). Adicionada em 2026-10-07; em produção, rodar SÓ o script
+-- harness/db/migracoes/2026-10-07-certificados-emitidos.sql (nunca este arquivo).
+CREATE TABLE certificados_emitidos (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  chave_pessoa varchar(200) NOT NULL,
+  codigo varchar(40) NOT NULL,
+  primeira_emissao timestamp NOT NULL DEFAULT current_timestamp(),
+  ultima_visualizacao timestamp NOT NULL DEFAULT current_timestamp(),
+  visualizacoes int(11) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY chave_pessoa (chave_pessoa)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

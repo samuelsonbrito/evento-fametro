@@ -61,7 +61,13 @@ ambiente usado: `[ local ]` (harness Docker) ou `[ prod ]` (InfinityFree).
 - [ ] Ler o QR Code do certificado impresso com a câmera do celular → abre
       `validar-certificado.php` dizendo "Certificado válido" com os mesmos dados.
 - [ ] Admin → Inscritos → botão "Certificado" de um confirmado abre o mesmo certificado.
-- [ ] Antes do deploy: `CERTIFICADO_SECRET` definido no `.env` de produção.
+- [ ] Admin → Estatísticas → bloco "Certificados": números batem com o banco; filtros
+      de turno, público, situação, carga horária e busca funcionam juntos; "Exportar
+      CSV" abre no Excel com acentos certos e respeita o filtro.
+- [ ] Abrir um certificado pelo painel NÃO aumenta a contagem de emitidos; abrir pelo
+      site (fora do painel, ex.: janela anônima) aumenta.
+- [ ] Antes do deploy: `CERTIFICADO_SECRET` definido no `.env` de produção e
+      `harness/db/migracoes/2026-10-07-certificados-emitidos.sql` executado no banco.
 
 ## Layout / impressão
 

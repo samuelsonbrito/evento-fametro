@@ -413,6 +413,26 @@ if [ -n "${HARNESS_ADMIN_USER:-}" ] && [ -n "${HARNESS_ADMIN_PASS:-}" ]; then
         FAIL=$((FAIL+1))
     fi
 
+    resp_stats="$(curl -s -b "$COOKIE_JAR" "$BASE_URL/admin/estatisticas.php")"
+    if printf '%s' "$resp_stats" | grep -qF "Certificados emitidos" && printf '%s' "$resp_stats" | grep -qF "DIEGO RAMOS"; then
+        echo "PASS  Estatísticas mostram o bloco de certificados com os participantes com direito"
+        PASS=$((PASS+1))
+    else
+        echo "FAIL  admin/estatisticas.php deveria mostrar o bloco de certificados (com DIEGO RAMOS)"
+        FAIL=$((FAIL+1))
+    fi
+
+    resp_stats_filtro="$(curl -s -b "$COOKIE_JAR" "$BASE_URL/admin/estatisticas.php?publico=externo")"
+    if printf '%s' "$resp_stats_filtro" | grep -qF "EDUARDA SOUZA" && ! printf '%s' "$resp_stats_filtro" | grep -qF "DIEGO RAMOS"; then
+        echo "PASS  Filtro de público (externo) nas estatísticas de certificado"
+        PASS=$((PASS+1))
+    else
+        echo "FAIL  Filtro publico=externo deveria listar só a EDUARDA SOUZA"
+        FAIL=$((FAIL+1))
+    fi
+
+    check_header_contains "Exportação CSV de certificados" "text/csv" -b "$COOKIE_JAR" "$BASE_URL/admin/estatisticas.php?turno=noite&exportar=csv"
+
     resp_relatos="$(curl -s -b "$COOKIE_JAR" "$BASE_URL/admin/relatos-erro.php?status=todos")"
     if printf '%s' "$resp_relatos" | grep -qi 'href="javascript:'; then
         echo "FAIL  admin/relatos-erro.php renderizou um link javascript: (XSS armazenado)"

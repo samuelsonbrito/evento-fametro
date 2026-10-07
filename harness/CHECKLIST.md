@@ -46,6 +46,23 @@ ambiente usado: `[ local ]` (harness Docker) ou `[ prod ]` (InfinityFree).
       declaração por página ao imprimir/exportar PDF.
 - [ ] Logout → sessão encerra e acesso a `/admin/index.php` redireciona pro login.
 
+## Certificado
+
+- [ ] Na home, emitir pelo e-mail de alguém com presença confirmada → certificado abre
+      com nome, matrícula (se aluno), carga horária e relação de palestras no verso.
+- [ ] Emitir pela matrícula da mesma pessoa → mesmas horas.
+- [ ] Emitir com e-mail de inscrito SEM presença → mensagem "Não encontramos presença
+      confirmada" de volta na home, com o texto digitado preservado no campo.
+- [ ] "Imprimir / Salvar PDF" no Chrome desktop → 2 páginas A4 paisagem (frente e
+      verso), sem página em branco, sem cortar o QR Code nem as assinaturas, cores e
+      faixas dos cantos aparecendo.
+- [ ] Mesmo teste no Safari do iPhone (Compartilhar → Imprimir → Salvar como PDF) e
+      visualização na tela em ~375px: certificado escala inteiro, sem rolagem lateral.
+- [ ] Ler o QR Code do certificado impresso com a câmera do celular → abre
+      `validar-certificado.php` dizendo "Certificado válido" com os mesmos dados.
+- [ ] Admin → Inscritos → botão "Certificado" de um confirmado abre o mesmo certificado.
+- [ ] Antes do deploy: `CERTIFICADO_SECRET` definido no `.env` de produção.
+
 ## Layout / impressão
 
 - [ ] Testar o comprovante e a declaração em `Ctrl+P` (preview de impressão) — layout

@@ -1,6 +1,13 @@
 <?php
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/evento.php';
+
+// Evento encerrado: inscrições fechadas, a home agora emite certificados.
+if (!INSCRICOES_ABERTAS) {
+    header('Location: /index.php#certificado');
+    exit;
+}
 
 $palestra_id = filter_input(INPUT_GET, 'palestra_id', FILTER_VALIDATE_INT);
 

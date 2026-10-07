@@ -4,15 +4,9 @@ require_once __DIR__ . '/includes/functions.php';
 
 header('Content-Type: application/xml; charset=utf-8');
 
-// Gerado dinamicamente (em vez de um .xml estático) porque a lista de palestras muda
-// pelo painel admin — assim o sitemap nunca fica desatualizado.
+// As páginas de inscrição (cadastro.php?palestra_id=N) saíram do sitemap quando as
+// inscrições foram encerradas (INSCRICOES_ABERTAS em includes/evento.php).
 $baseUrl = SITE_URL;
-
-try {
-    $palestras = $pdo->query('SELECT id FROM palestras ORDER BY id ASC')->fetchAll();
-} catch (PDOException $e) {
-    $palestras = [];
-}
 
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 ?>
@@ -22,11 +16,9 @@ echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-  <?php foreach ($palestras as $palestra): ?>
   <url>
-    <loc><?= htmlspecialchars($baseUrl) ?>/cadastro.php?palestra_id=<?= (int) $palestra['id'] ?></loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc><?= htmlspecialchars($baseUrl) ?>/validar-certificado.php</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
-  <?php endforeach; ?>
 </urlset>

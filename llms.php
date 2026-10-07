@@ -26,11 +26,11 @@ echo '> ' . EVENTO_RESUMO . "\n\n";
 echo "## Informações principais\n\n";
 echo '- Data: ' . EVENTO_DATA_EXTENSO . "\n";
 echo '- Local: ' . eventoLocalTexto() . " (evento presencial)\n";
-echo "- Inscrição: gratuita, vagas limitadas, pelo site " . SITE_URL . "/index.php\n";
+echo "- Situação: evento já realizado, inscrições encerradas\n";
 echo "- Público: alunos da FAMETRO e público externo\n";
-echo "- Horas complementares: até 15 horas (5 horas por turno)\n";
-echo "- Credenciamento: por QR Code, recebido no comprovante de inscrição\n";
-echo '- Recuperar comprovante/QR Code: ' . SITE_URL . "/consultar-inscricao.php\n\n";
+echo '- Horas complementares: até 15 horas (' . CERTIFICADO_HORAS_POR_TURNO . " horas por turno com presença confirmada)\n";
+echo '- Emitir certificado: ' . SITE_URL . "/index.php#certificado (informando o e-mail da inscrição ou a matrícula)\n";
+echo '- Validar certificado: ' . SITE_URL . "/validar-certificado.php (pelo código impresso no certificado)\n\n";
 
 echo "## Programação\n\n";
 if (!$palestras) {
@@ -40,7 +40,6 @@ foreach ($palestras as $p) {
     echo '### ' . linhaUnica($p['titulo']) . "\n\n";
     echo '- Palestrante: ' . linhaUnica($p['palestrante']) . "\n";
     echo '- Horário: ' . date('H:i', strtotime($p['horario_inicio'])) . ' às ' . date('H:i', strtotime($p['horario_fim'])) . "\n";
-    echo '- Inscrição: ' . SITE_URL . '/cadastro.php?palestra_id=' . (int) $p['id'] . "\n";
     if (trim($p['descricao']) !== '') {
         echo "\n" . linhaUnica($p['descricao']) . "\n";
     }

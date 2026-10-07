@@ -81,51 +81,21 @@ echo "-- Fluxo público --"
 check_body_contains "Home lista a programação"          "Programação das Palestras" "$BASE_URL/index.php"
 check_body_contains "CSS carrega"                        "" "$BASE_URL/assets/css/style.css"
 check_status        "CSS responde 200"                   200 "$BASE_URL/assets/css/style.css"
-check_body_contains "Cadastro abre para palestra válida" "Inscrição de Participante" "$BASE_URL/cadastro.php?palestra_id=1"
-check_status        "Cadastro sem palestra_id redireciona" 302 "$BASE_URL/cadastro.php"
+check_body_contains "Home oferece emissão de certificado"  "Emita seu certificado" "$BASE_URL/index.php"
+if curl -s "$BASE_URL/index.php" | grep -qF "cadastro.php?palestra_id="; then
+    echo "FAIL  Home não deveria mais linkar pra inscrição"
+    FAIL=$((FAIL+1))
+else
+    echo "PASS  Home não linka mais pra inscrição"
+    PASS=$((PASS+1))
+fi
+check_status        "Cadastro com inscrições encerradas redireciona" 302 "$BASE_URL/cadastro.php?palestra_id=1"
+check_status        "API de cadastro com inscrições encerradas redireciona" 302 -X POST "$BASE_URL/api/cadastrar_aluno.php"
 check_body_contains "Comprovante (seed) exibe QR"        "Comprovante de Inscrição" "$BASE_URL/comprovante.php?codigo=QR-SEEDCONFIRMADO01"
 check_body_contains "Ticket (seed) exibe QR"             "Comprovante de Inscrição" "$BASE_URL/ticket.php?codigo=QR-SEEDCONFIRMADO01"
 
 echo
-echo "-- Mensagens de erro não vazam detalhe do banco --"
-DUP_JAR="$(mktemp)"
-dup_token_1="$(curl -s -c "$DUP_JAR" "$BASE_URL/cadastro.php?palestra_id=5" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
-resp_dup1="$(curl -s -b "$DUP_JAR" -c "$DUP_JAR" -X POST "$BASE_URL/cadastro.php?palestra_id=5" \
-    --data-urlencode "csrf_token=$dup_token_1" \
-    --data-urlencode "nome_aluno=Smoke Duplicidade" \
-    --data-urlencode "email=smoke.dup1@exemplo.com" \
-    --data-urlencode "tipo_participante=aluno" \
-    --data-urlencode "matricula=SMOKE-DUP-001")"
-dup_token_2="$(curl -s -b "$DUP_JAR" -c "$DUP_JAR" "$BASE_URL/cadastro.php?palestra_id=5" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
-resp_dup2="$(curl -s -b "$DUP_JAR" -c "$DUP_JAR" -X POST "$BASE_URL/cadastro.php?palestra_id=5" \
-    --data-urlencode "csrf_token=$dup_token_2" \
-    --data-urlencode "nome_aluno=Smoke Duplicidade 2" \
-    --data-urlencode "email=smoke.dup2@exemplo.com" \
-    --data-urlencode "tipo_participante=aluno" \
-    --data-urlencode "matricula=SMOKE-DUP-001")"
-rm -f "$DUP_JAR"
-if printf '%s' "$resp_dup2" | grep -qF "Tente novamente em instantes" && ! printf '%s' "$resp_dup2" | grep -qi "SQLSTATE"; then
-    echo "PASS  Erro de duplicidade mostra mensagem genérica (sem SQLSTATE na tela)"
-    PASS=$((PASS+1))
-else
-    echo "FAIL  Mensagem de erro deveria ser genérica, sem vazar SQLSTATE — veio: $resp_dup2"
-    FAIL=$((FAIL+1))
-fi
-
-echo
 echo "-- CSRF --"
-resp_csrf_sem="$(curl -s -X POST "$BASE_URL/cadastro.php?palestra_id=6" \
-    --data-urlencode "nome_aluno=Smoke CSRF" \
-    --data-urlencode "email=smoke.csrf@exemplo.com" \
-    --data-urlencode "tipo_participante=externo")"
-if printf '%s' "$resp_csrf_sem" | grep -qF "Sessão expirada"; then
-    echo "PASS  cadastro.php rejeita POST sem csrf_token"
-    PASS=$((PASS+1))
-else
-    echo "FAIL  cadastro.php deveria rejeitar POST sem csrf_token — veio: $resp_csrf_sem"
-    FAIL=$((FAIL+1))
-fi
-
 resp_csrf_errado="$(curl -s -X POST "$BASE_URL/admin/login.php" \
     --data-urlencode "csrf_token=token-forjado-nao-existe" \
     --data-urlencode "usuario=admin" \
@@ -195,7 +165,7 @@ rm -f "$REPORT_JAR"
 
 echo
 echo "-- Consultar Inscrição --"
-check_body_contains "Link \"Consultar Inscrição\" aparece no header" 'consultar-inscricao.php' "$BASE_URL/index.php"
+check_body_contains "Link \"Emitir Certificado\" aparece no header" 'index.php#certificado' "$BASE_URL/index.php"
 
 CONS_JAR="$(mktemp)"
 cons_token="$(curl -s -c "$CONS_JAR" "$BASE_URL/consultar-inscricao.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
@@ -270,6 +240,90 @@ else
     FAIL=$((FAIL+1))
 fi
 rm -f "$CONS_JAR"
+
+echo
+echo "-- Certificado --"
+# Cada POST em certificado.php conta no limite por IP (CERTIFICADO_MAX_BUSCAS em
+# includes/certificado.php); rodar o script muitas vezes seguidas pode esbarrar nele.
+CERT_JAR="$(mktemp)"
+cert_token="$(curl -s -c "$CERT_JAR" "$BASE_URL/index.php" | grep -oP 'name="csrf_token" value="\K[^"]*' | head -1)"
+
+emitir_certificado() { # $1 = e-mail ou matrícula; segue o redirect e devolve o HTML final
+    curl -s -L -b "$CERT_JAR" -c "$CERT_JAR" -X POST \
+        --data-urlencode "csrf_token=$cert_token" --data-urlencode "identificador=$1" \
+        "$BASE_URL/certificado.php"
+}
+
+resp_cert_sem_csrf="$(curl -s -L -b "$CERT_JAR" -c "$CERT_JAR" -X POST -d 'identificador=202310789' "$BASE_URL/certificado.php")"
+if printf '%s' "$resp_cert_sem_csrf" | grep -qF "Sessão expirada"; then
+    echo "PASS  certificado.php rejeita POST sem csrf_token"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  certificado.php deveria rejeitar POST sem csrf_token"
+    FAIL=$((FAIL+1))
+fi
+
+resp_cert_15="$(emitir_certificado "202310789")"
+if printf '%s' "$resp_cert_15" | grep -qF "DIEGO RAMOS" && printf '%s' "$resp_cert_15" | grep -qF "15 (quinze) horas"; then
+    echo "PASS  Matrícula com presença nos 3 turnos emite certificado de 15h"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  Matrícula 202310789 deveria emitir certificado de 15h (DIEGO RAMOS)"
+    FAIL=$((FAIL+1))
+fi
+
+resp_cert_email="$(emitir_certificado "ANA.LIMA@exemplo.com")"
+if printf '%s' "$resp_cert_email" | grep -qF "ANA BEATRIZ LIMA" && printf '%s' "$resp_cert_email" | grep -qF "5 (cinco) horas"; then
+    echo "PASS  E-mail (com maiúsculas) emite certificado de 5h"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  E-mail da Ana deveria emitir certificado de 5h"
+    FAIL=$((FAIL+1))
+fi
+
+resp_cert_externo="$(emitir_certificado "eduarda.souza@exemplo.com")"
+if printf '%s' "$resp_cert_externo" | grep -qF "5 (cinco) horas" && ! printf '%s' "$resp_cert_externo" | grep -qF "Matrícula nº"; then
+    echo "PASS  Público externo: só a palestra com presença conta (5h) e não mostra matrícula"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  Certificado da Eduarda deveria ter 5h e nenhuma linha de matrícula"
+    FAIL=$((FAIL+1))
+fi
+
+resp_cert_sem_presenca="$(emitir_certificado "bruno.costa@exemplo.com")"
+if printf '%s' "$resp_cert_sem_presenca" | grep -qF "Não encontramos presença confirmada"; then
+    echo "PASS  Inscrito sem presença não recebe certificado"
+    PASS=$((PASS+1))
+else
+    echo "FAIL  bruno.costa (sem presença) não deveria receber certificado"
+    FAIL=$((FAIL+1))
+fi
+
+cert_url="$(curl -s -o /dev/null -w '%{redirect_url}' -b "$CERT_JAR" -c "$CERT_JAR" -X POST \
+    --data-urlencode "csrf_token=$cert_token" --data-urlencode "identificador=202310789" \
+    "$BASE_URL/certificado.php")"
+cert_codigo="$(printf '%s' "$cert_url" | grep -oP 'c=\K[A-Z0-9-]+')"
+rm -f "$CERT_JAR"
+
+if printf '%s' "$cert_url" | grep -qF "202310789"; then
+    echo "FAIL  URL do certificado não deveria expor a matrícula: $cert_url"
+    FAIL=$((FAIL+1))
+else
+    echo "PASS  URL do certificado não expõe e-mail/matrícula"
+    PASS=$((PASS+1))
+fi
+
+check_body_contains "Certificado é noindex (dados pessoais)" 'name="robots" content="noindex, nofollow"' "$BASE_URL/certificado.php?c=$cert_codigo"
+check_body_contains "Validação aceita o código emitido"   "Certificado válido" "$BASE_URL/validar-certificado.php?codigo=$cert_codigo"
+check_body_contains "Validação aceita código em minúsculas" "Certificado válido" "$BASE_URL/validar-certificado.php?codigo=$(printf '%s' "$cert_codigo" | tr 'A-Z' 'a-z')"
+
+# Troca o último caractere da assinatura: tem que deixar de validar.
+cert_ultimo="${cert_codigo: -1}"
+if [ "$cert_ultimo" = "0" ]; then cert_troca="1"; else cert_troca="0"; fi
+cert_adulterado="${cert_codigo%?}$cert_troca"
+check_body_contains "Validação recusa código adulterado"  "Certificado não encontrado" "$BASE_URL/validar-certificado.php?codigo=$cert_adulterado"
+check_status        "Certificado com código adulterado redireciona" 302 "$BASE_URL/certificado.php?c=$cert_adulterado"
+check_status        "Certificado sem código redireciona"  302 "$BASE_URL/certificado.php"
 
 echo
 echo "-- Headers de segurança e cookie de sessão --"

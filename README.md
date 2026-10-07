@@ -32,6 +32,12 @@ participação (individuais ou em lote).
   duas palestras que aconteçam ao mesmo tempo.
 - Comprovante de inscrição com QR Code gerado na hora (`comprovante.php`/`ticket.php`),
   usando a API pública do [QuickChart](https://quickchart.io/) pra renderizar a imagem.
+- **Depois do evento:** a home troca a inscrição pela emissão de certificado. A pessoa
+  informa o e-mail ou a matrícula e recebe um certificado A4 (frente + relação de
+  palestras), com 5h por turno com presença confirmada (até 15h) e código/QR Code de
+  validação (`certificado.php`, `validar-certificado.php`, regras em
+  `includes/certificado.php` e `includes/evento.php`). As inscrições ficam fechadas por
+  `INSCRICOES_ABERTAS = false` em `includes/evento.php`.
 
 **Administração (login obrigatório):**
 - Painel com estatísticas gerais: total de palestras, inscrições e presenças
@@ -162,8 +168,11 @@ mão, já que o projeto não usa Composer).
 
 ```bash
 cp .env.example .env
-# edite .env com as credenciais do seu MySQL
+# edite .env com as credenciais do seu MySQL e o CERTIFICADO_SECRET
 ```
+
+`CERTIFICADO_SECRET` assina o código de validação dos certificados. Sem ela a emissão
+fica desativada, e trocá-la depois de publicada invalida todos os códigos já emitidos.
 
 `.env` está no `.gitignore` e nunca deve ser commitado — `.env.example` é o único
 modelo versionado. O harness Docker **não usa** esse `.env`: ele injeta as variáveis

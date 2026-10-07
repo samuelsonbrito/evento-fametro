@@ -142,12 +142,12 @@ function ipDoCliente() {
     return $_SERVER['REMOTE_ADDR'] ?? 'desconhecido';
 }
 
-function estaLimitadoPorTentativas($pdo, $identificador) {
+function estaLimitadoPorTentativas($pdo, $identificador, $maxTentativas = RATE_LIMIT_MAX_TENTATIVAS) {
     $stmt = $pdo->prepare(
         "SELECT 1 FROM tentativas_login
          WHERE identificador = ? AND tentativas >= ? AND ultima_tentativa >= NOW() - INTERVAL ? MINUTE"
     );
-    $stmt->execute([$identificador, RATE_LIMIT_MAX_TENTATIVAS, RATE_LIMIT_JANELA_MINUTOS]);
+    $stmt->execute([$identificador, $maxTentativas, RATE_LIMIT_JANELA_MINUTOS]);
     return (bool) $stmt->fetchColumn();
 }
 

@@ -39,7 +39,22 @@ INSERT INTO inscricoes (nome_aluno, matricula, email, palestra_id, codigo_qrcode
     ('Bruno Costa', '202310456', 'bruno.costa@exemplo.com', 2, 'QR-SEEDPENDENTE02', 0, 'aluno', 0, NULL),
     -- Público externo, sem matrícula — vários externos podem ter matricula NULL na
     -- mesma palestra porque o MySQL não considera NULL=NULL em UNIQUE KEY.
-    ('Carla Mendes', NULL, 'carla.mendes@exemplo.com', 2, 'QR-SEEDEXTERNO01', 0, 'externo', 0, NULL);
+    ('Carla Mendes', NULL, 'carla.mendes@exemplo.com', 2, 'QR-SEEDEXTERNO01', 0, 'externo', 0, NULL),
+    -- Certificado com os 3 turnos (15h): presença em 2 palestras da manhã (1, 2), 1 da
+    -- tarde (4) e 1 da noite (7) — testa que 2 palestras no mesmo turno não somam 10h.
+    ('Diego Ramos', '202310789', 'diego.ramos@exemplo.com', 1, 'QR-SEEDCERT15H01', 1, 'aluno', 1, NOW()),
+    ('Diego Ramos', '202310789', 'diego.ramos@exemplo.com', 2, 'QR-SEEDCERT15H02', 1, 'aluno', 1, NOW()),
+    ('Diego Ramos', '202310789', 'diego.ramos@exemplo.com', 4, 'QR-SEEDCERT15H04', 1, 'aluno', 1, NOW()),
+    ('Diego Ramos', '202310789', 'diego.ramos@exemplo.com', 7, 'QR-SEEDCERT15H07', 1, 'aluno', 1, NOW()),
+    -- Inscrito mas faltou numa delas: só a palestra 5 (tarde) conta — certificado de 5h.
+    ('Eduarda Souza', NULL, 'eduarda.souza@exemplo.com', 5, 'QR-SEEDEXTPRES05', 1, 'externo', 1, NOW()),
+    ('Eduarda Souza', NULL, 'eduarda.souza@exemplo.com', 8, 'QR-SEEDEXTFALT08', 0, 'externo', 0, NULL);
+
+-- Certificados esperados (ver smoke-tests.sh):
+--   ana.lima@exemplo.com / 202310123  -> 5h  (manhã)
+--   202310789 / diego.ramos@...       -> 15h (manhã, tarde, noite)
+--   eduarda.souza@exemplo.com         -> 5h  (tarde), público externo, sem matrícula
+--   bruno.costa@... / carla.mendes@... -> sem certificado (nenhuma presença)
 
 -- Nota sobre teste de conflito de horário (verificarConflitoHorario em
 -- includes/functions.php): a grade real (palestras 1-9) não tem horários sobrepostos

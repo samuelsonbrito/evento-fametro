@@ -67,6 +67,27 @@ function certificadoBuscarParticipacoes($pdo, $tipo, $identificador) {
     return $stmt->fetchAll();
 }
 
+// Regra de carga horária, num lugar só (certificado e estatísticas usam a mesma):
+// recebe ['manha' => nº de palestras com presença, ...] e devolve as horas por turno.
+function certificadoHorasPorTurno($palestrasPorTurno) {
+    $horas = [];
+    foreach (['manha', 'tarde', 'noite'] as $chave) {
+        $horas[$chave] = ($palestrasPorTurno[$chave] ?? 0) >= CERTIFICADO_MIN_PALESTRAS_POR_TURNO
+            ? CERTIFICADO_HORAS_POR_TURNO
+            : 0;
+    }
+    return $horas;
+}
+
+// Identifica a pessoa para fins de contagem: a matrícula quando existe (o mesmo aluno
+// pode ter emitido pelo e-mail e pela matrícula), senão o e-mail.
+function certificadoChavePessoa($matricula, $email) {
+    $matricula = trim((string) $matricula);
+    return $matricula !== ''
+        ? 'M:' . mb_strtolower($matricula, 'UTF-8')
+        : 'E:' . mb_strtolower(trim((string) $email), 'UTF-8');
+}
+
 // Monta tudo o que a página do certificado precisa. Retorna null se a pessoa não tem
 // presença confirmada suficiente pra somar alguma hora.
 function certificadoMontar($pdo, $tipo, $identificador, $idAncora = null) {
@@ -108,12 +129,10 @@ function certificadoMontar($pdo, $tipo, $identificador, $idAncora = null) {
         ];
     }
 
-    $horasTotal = 0;
-    foreach ($turnos as $chave => $turno) {
-        if (count($turno['palestras']) >= CERTIFICADO_MIN_PALESTRAS_POR_TURNO) {
-            $turnos[$chave]['horas'] = CERTIFICADO_HORAS_POR_TURNO;
-            $horasTotal += CERTIFICADO_HORAS_POR_TURNO;
-        }
+    $horasPorTurno = certificadoHorasPorTurno(array_map(function ($t) { return count($t['palestras']); }, $turnos));
+    $horasTotal = array_sum($horasPorTurno);
+    foreach ($horasPorTurno as $chave => $horas) {
+        $turnos[$chave]['horas'] = $horas;
     }
 
     if ($horasTotal === 0) {
@@ -148,6 +167,7 @@ function certificadoMontar($pdo, $tipo, $identificador, $idAncora = null) {
 
     return [
         'codigo' => $codigo,
+        'chave_pessoa' => certificadoChavePessoa($matricula, $maisRecente['email']),
         'nome' => mb_strtoupper(textoPuro($maisRecente['nome_aluno']), 'UTF-8'),
         'matricula' => $matricula !== null ? textoPuro($matricula) : null,
         'tipo_participante' => $maisRecente['tipo_participante'],
@@ -189,4 +209,79 @@ function certificadoUrlValidacao($codigo) {
 function certificadoHorasPorExtenso($horas) {
     $extenso = [5 => 'cinco', 10 => 'dez', 15 => 'quinze'];
     return isset($extenso[$horas]) ? $horas . ' (' . $extenso[$horas] . ') horas' : $horas . ' horas';
+}
+
+// Registra que a pessoa abriu o próprio certificado (tabela certificados_emitidos).
+// Uma linha por pessoa: a primeira emissão fica guardada e as aberturas seguintes só
+// somam visualizações. Nunca derruba a página: se a tabela ainda não existir em
+// produção, só loga.
+function certificadoRegistrarEmissao($pdo, $certificado) {
+    try {
+        $stmt = $pdo->prepare(
+            "INSERT INTO certificados_emitidos (chave_pessoa, codigo, primeira_emissao, ultima_visualizacao, visualizacoes)
+             VALUES (?, ?, NOW(), NOW(), 1)
+             ON DUPLICATE KEY UPDATE
+                codigo = VALUES(codigo),
+                ultima_visualizacao = NOW(),
+                visualizacoes = visualizacoes + 1"
+        );
+        $stmt->execute([$certificado['chave_pessoa'], $certificado['codigo']]);
+    } catch (PDOException $e) {
+        error_log('Não foi possível registrar a emissão do certificado: ' . $e->getMessage());
+    }
+}
+
+// Todas as pessoas com direito a certificado, calculadas pela mesma regra do
+// certificado. Usado nas estatísticas do admin.
+function certificadoElegiveis($pdo) {
+    $linhas = $pdo->query(
+        "SELECT i.id, i.nome_aluno, i.matricula, i.email, i.tipo_participante, i.palestra_id, p.horario_inicio
+         FROM inscricoes i
+         JOIN palestras p ON p.id = i.palestra_id
+         WHERE i.presenca_confirmada = 1 OR i.presente = 1
+         ORDER BY i.id ASC"
+    )->fetchAll();
+
+    $pessoas = [];
+    foreach ($linhas as $linha) {
+        $chave = certificadoChavePessoa($linha['matricula'], $linha['email']);
+        if (!isset($pessoas[$chave])) {
+            // Primeira inscrição com presença = âncora do código (mesma escolha do
+            // certificado), pra o admin conseguir abrir o certificado de quem ainda
+            // não emitiu.
+            $pessoas[$chave] = [
+                'chave_pessoa' => $chave,
+                'id_ancora' => (int) $linha['id'],
+                'tipo_busca' => !empty($linha['matricula']) ? 'M' : 'E',
+                'identificador' => !empty($linha['matricula']) ? $linha['matricula'] : $linha['email'],
+                'palestras' => [],
+                'contagem' => ['manha' => 0, 'tarde' => 0, 'noite' => 0],
+            ];
+        }
+        // A inscrição mais recente define nome/e-mail/tipo, igual ao certificado.
+        $pessoas[$chave]['nome'] = mb_strtoupper(textoPuro($linha['nome_aluno']), 'UTF-8');
+        $pessoas[$chave]['email'] = textoPuro($linha['email']);
+        $pessoas[$chave]['tipo_participante'] = $linha['tipo_participante'];
+        if (!empty($linha['matricula'])) {
+            $pessoas[$chave]['matricula'] = textoPuro($linha['matricula']);
+        }
+        if (!isset($pessoas[$chave]['palestras'][$linha['palestra_id']])) {
+            $pessoas[$chave]['palestras'][$linha['palestra_id']] = true;
+            $pessoas[$chave]['contagem'][turnoDaPalestra($linha['horario_inicio'])['chave']]++;
+        }
+    }
+
+    $resultado = [];
+    foreach ($pessoas as $chave => $pessoa) {
+        $horas = certificadoHorasPorTurno($pessoa['contagem']);
+        if (array_sum($horas) === 0) {
+            continue;
+        }
+        $pessoa['matricula'] = $pessoa['matricula'] ?? null;
+        $pessoa['horas_por_turno'] = $horas;
+        $pessoa['horas_total'] = array_sum($horas);
+        unset($pessoa['palestras'], $pessoa['contagem']);
+        $resultado[$chave] = $pessoa;
+    }
+    return $resultado;
 }

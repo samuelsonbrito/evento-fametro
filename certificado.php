@@ -61,6 +61,11 @@ if (!$certificado) {
     voltarComErroCertificado('Certificado não encontrado. Emita novamente informando seu e-mail ou matrícula.');
 }
 
+// Conta pras estatísticas — mas não quando é a equipe abrindo pelo painel.
+if (empty($_SESSION['admin_logged'])) {
+    certificadoRegistrarEmissao($pdo, $certificado);
+}
+
 $turnosComHoras = array_filter($certificado['turnos'], function ($t) { return $t['horas'] > 0; });
 $rotulosTurnos = array_map(function ($t) { return 'da ' . mb_strtolower($t['rotulo'], 'UTF-8'); }, array_values($turnosComHoras));
 $textoTurnos = count($rotulosTurnos) > 1

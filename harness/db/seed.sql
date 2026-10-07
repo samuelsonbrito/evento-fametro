@@ -50,6 +50,10 @@ INSERT INTO inscricoes (nome_aluno, matricula, email, palestra_id, codigo_qrcode
     ('Eduarda Souza', NULL, 'eduarda.souza@exemplo.com', 5, 'QR-SEEDEXTPRES05', 1, 'externo', 1, NOW()),
     ('Eduarda Souza', NULL, 'eduarda.souza@exemplo.com', 8, 'QR-SEEDEXTFALT08', 0, 'externo', 0, NULL);
 
+-- Diego já abriu o certificado 3 vezes (estatísticas: 1 emitido de 3 com direito).
+INSERT INTO certificados_emitidos (chave_pessoa, codigo, primeira_emissao, ultima_visualizacao, visualizacoes) VALUES
+    ('M:202310789', 'IMIA-SEED', NOW() - INTERVAL 1 DAY, NOW(), 3);
+
 -- Certificados esperados (ver smoke-tests.sh):
 --   ana.lima@exemplo.com / 202310123  -> 5h  (manhã)
 --   202310789 / diego.ramos@...       -> 15h (manhã, tarde, noite)

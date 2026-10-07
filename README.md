@@ -210,12 +210,16 @@ etc.) estão documentados e priorizados em `harness/ISSUES.md`.
 
 ## Deploy em produção
 
-Não há CI/CD — o deploy no InfinityFree é manual (FTP/painel do host). Dois pontos de
+Não há CI/CD — o deploy no InfinityFree é manual (FTP/painel do host). Pontos de
 atenção:
 
 1. O `.env` de produção precisa existir **antes** de enviar um `config/database.php`
    atualizado, senão o site cai (não acha as variáveis de ambiente).
-2. `harness/db/schema.sql`/`seed.sql` começam com `DROP TABLE` — **nunca rodar contra
+2. Tabelas novas entram em produção por scripts pontuais em `harness/db/migracoes/`
+   (só `CREATE TABLE IF NOT EXISTS`), rodados uma vez no phpMyAdmin — ex.:
+   `2026-10-07-certificados-emitidos.sql`, que ativa a contagem de certificados
+   emitidos em Admin → Estatísticas.
+3. `harness/db/schema.sql`/`seed.sql` começam com `DROP TABLE` — **nunca rodar contra
    o banco de produção**. Eles servem só pro MySQL descartável do harness. Qualquer
    ajuste em produção deve ser um script pontual (`ALTER`/`UPDATE`/`DELETE`
    específicos), nunca esses arquivos.

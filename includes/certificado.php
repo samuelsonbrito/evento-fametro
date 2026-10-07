@@ -1,0 +1,192 @@
+<?php
+// Emissão e validação do certificado da Jornada. Depende de functions.php e
+// evento.php já carregados.
+//
+// Não existe tabela de certificados: o certificado é sempre recalculado a partir das
+// inscrições com presença confirmada. O código de validação carrega o id de uma
+// inscrição "âncora" + o tipo de busca (E = e-mail, M = matrícula) e é assinado com
+// HMAC (CERTIFICADO_SECRET no .env), então não dá pra forjar nem adivinhar o código
+// de outra pessoa trocando o id.
+//
+// Formato: IMIA-<E|M><id em base 36>-<10 hex do HMAC>, ex.: IMIA-E1C-8F3A9B21C0
+
+define('CERTIFICADO_PREFIXO', 'IMIA');
+
+// Limite de buscas por IP mais folgado que o do login: depois do evento muita gente
+// emite o certificado ao mesmo tempo pela rede do campus (mesmo IP público).
+define('CERTIFICADO_MAX_BUSCAS', 30);
+
+function certificadoSegredo() {
+    $segredo = getenv('CERTIFICADO_SECRET');
+    if ($segredo === false || strlen($segredo) < 16) {
+        error_log('CERTIFICADO_SECRET ausente ou curto demais (mínimo 16 caracteres) — emissão de certificados desativada.');
+        return null;
+    }
+    return $segredo;
+}
+
+// "@" no texto digitado = e-mail; qualquer outra coisa = matrícula.
+function certificadoTipoIdentificador($valor) {
+    return strpos($valor, '@') !== false ? 'E' : 'M';
+}
+
+function certificadoNormalizarIdentificador($tipo, $valor) {
+    $valor = trim((string) $valor);
+    return $tipo === 'E' ? mb_strtolower($valor, 'UTF-8') : $valor;
+}
+
+function certificadoAssinatura($tipo, $idAncora, $identificador) {
+    $segredo = certificadoSegredo();
+    if ($segredo === null) {
+        return null;
+    }
+    $mensagem = 'certificado|' . $tipo . '|' . (int) $idAncora . '|' . certificadoNormalizarIdentificador($tipo, $identificador);
+    return strtoupper(substr(hash_hmac('sha256', $mensagem, $segredo), 0, 10));
+}
+
+function certificadoGerarCodigo($tipo, $idAncora, $identificador) {
+    $assinatura = certificadoAssinatura($tipo, $idAncora, $identificador);
+    if ($assinatura === null) {
+        return null;
+    }
+    return CERTIFICADO_PREFIXO . '-' . $tipo . strtoupper(base_convert((string) (int) $idAncora, 10, 36)) . '-' . $assinatura;
+}
+
+// Inscrições com presença confirmada de uma pessoa, já com os dados da palestra.
+function certificadoBuscarParticipacoes($pdo, $tipo, $identificador) {
+    $coluna = $tipo === 'E' ? 'i.email' : 'i.matricula';
+    $stmt = $pdo->prepare(
+        "SELECT i.id, i.nome_aluno, i.matricula, i.email, i.tipo_participante, i.palestra_id,
+                p.titulo, p.palestrante, p.horario_inicio, p.horario_fim
+         FROM inscricoes i
+         JOIN palestras p ON p.id = i.palestra_id
+         WHERE $coluna = ? AND (i.presenca_confirmada = 1 OR i.presente = 1)
+         ORDER BY p.horario_inicio ASC, i.id ASC"
+    );
+    $stmt->execute([trim((string) $identificador)]);
+    return $stmt->fetchAll();
+}
+
+// Monta tudo o que a página do certificado precisa. Retorna null se a pessoa não tem
+// presença confirmada suficiente pra somar alguma hora.
+function certificadoMontar($pdo, $tipo, $identificador, $idAncora = null) {
+    if ($tipo === 'M' && trim((string) $identificador) === '') {
+        return null;
+    }
+
+    $linhas = certificadoBuscarParticipacoes($pdo, $tipo, $identificador);
+    if (!$linhas) {
+        return null;
+    }
+
+    $turnos = [
+        'manha' => ['rotulo' => 'Manhã', 'palestras' => [], 'horas' => 0],
+        'tarde' => ['rotulo' => 'Tarde', 'palestras' => [], 'horas' => 0],
+        'noite' => ['rotulo' => 'Noite', 'palestras' => [], 'horas' => 0],
+    ];
+    $palestrasVistas = [];
+    $maisRecente = null;
+    $matricula = null;
+
+    foreach ($linhas as $linha) {
+        if ($maisRecente === null || (int) $linha['id'] > (int) $maisRecente['id']) {
+            $maisRecente = $linha;
+        }
+        if (!empty($linha['matricula'])) {
+            $matricula = $linha['matricula'];
+        }
+        if (isset($palestrasVistas[$linha['palestra_id']])) {
+            continue;
+        }
+        $palestrasVistas[$linha['palestra_id']] = true;
+
+        $turno = turnoDaPalestra($linha['horario_inicio']);
+        $turnos[$turno['chave']]['palestras'][] = [
+            'titulo' => textoPuro($linha['titulo']),
+            'palestrante' => textoPuro($linha['palestrante']),
+            'horario' => date('H:i', strtotime($linha['horario_inicio'])) . ' às ' . date('H:i', strtotime($linha['horario_fim'])),
+        ];
+    }
+
+    $horasTotal = 0;
+    foreach ($turnos as $chave => $turno) {
+        if (count($turno['palestras']) >= CERTIFICADO_MIN_PALESTRAS_POR_TURNO) {
+            $turnos[$chave]['horas'] = CERTIFICADO_HORAS_POR_TURNO;
+            $horasTotal += CERTIFICADO_HORAS_POR_TURNO;
+        }
+    }
+
+    if ($horasTotal === 0) {
+        return null;
+    }
+
+    // Âncora = menor id com presença. Na validação, o id vem do próprio código e só
+    // precisa continuar pertencendo à pessoa (não precisa ser o menor), pra um código
+    // já emitido não mudar se outra presença for confirmada depois.
+    $ids = array_map('intval', array_column($linhas, 'id'));
+    if ($idAncora === null) {
+        $idAncora = min($ids);
+    } elseif (!in_array((int) $idAncora, $ids, true)) {
+        return null;
+    }
+
+    // Assina com o valor gravado na inscrição âncora (não com o texto digitado): o
+    // MySQL compara sem diferenciar maiúsculas, a validação lê do banco.
+    $colunaIdentificador = $tipo === 'E' ? 'email' : 'matricula';
+    $identificadorGravado = $identificador;
+    foreach ($linhas as $linha) {
+        if ((int) $linha['id'] === (int) $idAncora) {
+            $identificadorGravado = $linha[$colunaIdentificador];
+            break;
+        }
+    }
+
+    $codigo = certificadoGerarCodigo($tipo, $idAncora, $identificadorGravado);
+    if ($codigo === null) {
+        return null;
+    }
+
+    return [
+        'codigo' => $codigo,
+        'nome' => mb_strtoupper(textoPuro($maisRecente['nome_aluno']), 'UTF-8'),
+        'matricula' => $matricula !== null ? textoPuro($matricula) : null,
+        'tipo_participante' => $maisRecente['tipo_participante'],
+        'turnos' => $turnos,
+        'horas_total' => $horasTotal,
+    ];
+}
+
+// Valida um código digitado/lido no QR e devolve o certificado, ou null se for
+// inválido, adulterado ou se a presença tiver sido removida depois.
+function certificadoPorCodigo($pdo, $codigo) {
+    $codigo = strtoupper(trim((string) $codigo));
+    if (!preg_match('/^' . CERTIFICADO_PREFIXO . '-([EM])([0-9A-Z]{1,10})-([0-9A-F]{10})$/', $codigo, $m)) {
+        return null;
+    }
+    list(, $tipo, $idBase36, $assinatura) = $m;
+    $idAncora = (int) base_convert(strtolower($idBase36), 36, 10);
+
+    $stmt = $pdo->prepare('SELECT email, matricula FROM inscricoes WHERE id = ?');
+    $stmt->execute([$idAncora]);
+    $ancora = $stmt->fetch();
+    if (!$ancora) {
+        return null;
+    }
+
+    $identificador = $tipo === 'E' ? $ancora['email'] : $ancora['matricula'];
+    $esperada = certificadoAssinatura($tipo, $idAncora, $identificador);
+    if ($esperada === null || !hash_equals($esperada, $assinatura)) {
+        return null;
+    }
+
+    return certificadoMontar($pdo, $tipo, $identificador, $idAncora);
+}
+
+function certificadoUrlValidacao($codigo) {
+    return SITE_URL . '/validar-certificado.php?codigo=' . rawurlencode($codigo);
+}
+
+function certificadoHorasPorExtenso($horas) {
+    $extenso = [5 => 'cinco', 10 => 'dez', 15 => 'quinze'];
+    return isset($extenso[$horas]) ? $horas . ' (' . $extenso[$horas] . ') horas' : $horas . ' horas';
+}

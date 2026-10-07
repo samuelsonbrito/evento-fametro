@@ -30,6 +30,8 @@ services:
       DB_NAME: evento_fametro
       DB_USER: fametro
       DB_PASS: fametro_local_pw
+      # Só pro harness — produção usa outra chave, definida no .env de lá.
+      CERTIFICADO_SECRET: harness-local-certificado-nao-usar-em-producao
     volumes:
       # O projeto entra direto na raiz do docroot do Apache — o app usa caminhos
       # absolutos tipo /index.php (sem prefixo de subpasta) em headers e links, pra

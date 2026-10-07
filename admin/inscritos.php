@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/evento.php';
+require_once __DIR__ . '/../includes/certificado.php';
 
 checarAutenticacaoAdmin();
 
@@ -129,6 +131,16 @@ require_once __DIR__ . '/../includes/header.php';
                       <a href="/admin/imprimir-comprovante.php?id=<?= $row['id'] ?>" target="_blank" class="btn btn-sm btn-success rounded-3 fw-bold">
                         <i class="ti ti-file-text me-1"></i> Declaração
                       </a>
+                      <?php
+                        // Mesmo certificado que o participante emite pela home, ancorado nesta inscrição.
+                        $tipoCertificado = !empty($row['matricula']) ? 'M' : 'E';
+                        $codigoCertificado = certificadoGerarCodigo($tipoCertificado, $row['id'], $tipoCertificado === 'M' ? $row['matricula'] : $row['email']);
+                      ?>
+                      <?php if ($codigoCertificado): ?>
+                        <a href="/certificado.php?c=<?= rawurlencode($codigoCertificado) ?>" target="_blank" class="btn btn-sm btn-primary rounded-3 fw-bold">
+                          <i class="ti ti-certificate me-1"></i> Certificado
+                        </a>
+                      <?php endif; ?>
                     <?php else: ?>
                       <button class="btn btn-sm btn-light border text-muted rounded-3" disabled title="Aguardando confirmação de presença">
                         <i class="ti ti-lock me-1"></i> Declaração

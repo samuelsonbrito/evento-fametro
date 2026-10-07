@@ -4,8 +4,8 @@ iniciarSessaoSegura();
 // Cada página pode definir $pageTitle/$pageDescription/$pageImage/$pageNoIndex/
 // $pageCanonical antes de dar require neste arquivo. Sem isso, cai nos padrões
 // abaixo (bons o bastante pra home, mas genéricos demais pra páginas internas).
-$pageTitle       = $pageTitle ?? 'Jornada Acadêmica Imersão IA FAMETRO — Inscrições Abertas';
-$pageDescription = $pageDescription ?? 'Inscreva-se gratuitamente na Jornada Acadêmica Imersão IA FAMETRO, dia 2 de outubro. Palestras sobre Inteligência Artificial, até 15h complementares e credenciamento por QR Code.';
+$pageTitle       = $pageTitle ?? 'Jornada Acadêmica Imersão IA FAMETRO — Emita seu Certificado';
+$pageDescription = $pageDescription ?? 'Participou da Jornada Acadêmica Imersão IA FAMETRO em 2 de outubro? Emita seu certificado com até 15 horas complementares.';
 $pageImage       = $pageImage ?? SITE_URL . '/assets/img/principal.png';
 $pageNoIndex     = $pageNoIndex ?? false;
 $pageCanonical   = $pageCanonical ?? SITE_URL . ($_SERVER['REQUEST_URI'] ?? '/index.php');
@@ -50,8 +50,8 @@ $pageCanonical   = $pageCanonical ?? SITE_URL . ($_SERVER['REQUEST_URI'] ?? '/in
             <span class="fw-bold text-fametro-blue d-none d-sm-inline">Imersão IA FAMETRO</span>
           </a>
           <div class="navbar-nav ms-auto">
-            <a href="/consultar-inscricao.php" class="btn btn-outline-secondary btn-sm me-2">
-              <i class="ti ti-qrcode me-1"></i> Consultar Inscrição
+            <a href="/index.php#certificado" class="btn btn-outline-secondary btn-sm me-2">
+              <i class="ti ti-certificate me-1"></i> <span class="d-none d-sm-inline">Emitir </span>Certificado
             </a>
             <?php if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true): ?>
               <a href="/admin/index.php" class="btn btn-fametro-red btn-sm me-2">

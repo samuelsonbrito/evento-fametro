@@ -1,6 +1,7 @@
 <footer class="footer footer-transparent d-print-none mt-auto py-3 border-top">
           <div class="container-xl text-center">
             <p class="mb-0 text-muted">&copy; <?= date('Y') ?> <strong>Jornada Acadêmica Imersão IA FAMETRO</strong>. 2 de Outubro.</p>
+            <p class="mb-0 mt-1 text-muted small">Desenvolvimento de Software &ndash; <a href="https://ocellatus.com.br/" target="_blank" rel="noopener" class="link-ocellatus">Ocellatus</a></p>
           </div>
         </footer>
       </div>

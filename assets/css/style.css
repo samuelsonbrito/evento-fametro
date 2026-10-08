@@ -132,3 +132,14 @@
 .faq-item[open] summary::after {
   content: "−";
 }
+
+/* Crédito de desenvolvimento no rodapé */
+.link-ocellatus {
+  color: var(--fametro-red);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.link-ocellatus:hover {
+  text-decoration: underline;
+}
